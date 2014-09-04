@@ -373,7 +373,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             for ( var i = 1; i <= numGangs; i++ ) {
                 positionGangs[ i ] = { x : 856, y : 161 + ( i - 1 ) * ( gangHeightMin + ( numCheckboxRows ) * 28 + 10 ) } // rightmost column position
             }
-            console.log(heightGangs);
             canvasHeight = 663;
             canvasWidth = 1132;
             adjustHtml( canvasWidth, canvasHeight );

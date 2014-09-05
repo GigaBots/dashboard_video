@@ -26,8 +26,8 @@ var gameStates = {}
 
 // global bot variables stored in client's browser
 var botStore = { // client id (GUID) : bot name
-    'fakeBotId1' : 'Fake Bot 1',
-    'fakeBotId2' : 'Fake Bot 2'
+    //'fakeBotId1' : 'Fake Bot 1',
+    //'fakeBotId2' : 'Fake Bot 2'
 }
 var botId = "", botIndex = 0, botName = "";
 var bot = { nameDisplay : "" }
@@ -674,11 +674,35 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         var topBars = {}
         var dividers = {}
 
-        /* Play/stop button and status */
+        /* System info, play/stop button and status */
+        var positionSystem = { x : 1, y : 1 }
         var labelStatus, statusButton;
         var dashboardStatus = 1; // 1 = 'running/resumed', 0 = 'stopped/paused'
         var status = { statusDisplay : "running..." } // initially running
         var resume = { messageDisplay : 0, resumeOverlay : 0 }
+
+        /* User control queue */
+        var positionControl = { x : 856, y : 1 }
+        var userControl = {
+            labelControl : '',
+            labelViewers : '',
+            viewCount : 1,
+            textViewCount : '',
+            labelWaiters : '',
+            waitCount : 1,
+            textWaitCount : '',
+            labelCurrentUser : '',
+            currentUser : 'nobody',
+            textCurrentUser : '',
+            labelYourName : '',
+            yourName : 'anonymous',
+            textYourName : '',
+            labelTime : '',
+            time : 60,
+            textTime : '',
+        }
+        var requestControlButton;
+        var inputNameButton;
 
         /* Sensor ID labels */
         var sensorIDLabels = {
@@ -692,10 +716,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             // touch : '',
             // color : '',
             // ultrasonic : ''
-        }
-
-        /* System info */
-        var positionSystem = { x : 1, y : 1 }
+        }     
 
         /* Touch sensor */
         var positionTouch = { x : 1, y : 96 }
@@ -737,9 +758,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // var positionScreen = { x : 1, y : 430 }
         // var labelScreen, LCDScreenBox;
         // var screenMessage = { messageDisplay1 : "", messageDisplay2 : "", messageDisplay3 : "", messageDisplay4 : "" }
-
-        /* User control queue */
-        var positionControl = { x : 856, y : 1 }
 
         /* Button for testing */
         var getKeyspaceButton;
@@ -1162,6 +1180,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.spritesheet('plusButton','assets/buttons/plus_button_spritesheet.png', 44, 44);
             game.load.spritesheet('touchIndicator','assets/touch_sensor_spritesheet.png', 21, 21);
             game.load.spritesheet('statusButton','assets/buttons/status_button_spritesheet.png', 76, 32);
+            game.load.spritesheet('requestControlButton','assets/buttons/request_control_button_spritesheet.png', 141, 39);
+            game.load.spritesheet('inputNameButton','assets/buttons/input_name_button_spritesheet.png', 71, 61);
             game.load.spritesheet('dialFace','assets/dial_face_spritesheet.png', 52, 52);
             //game.load.spritesheet('screenInputButton', 'assets/buttons/lcd_screen_input_button_spritesheet.png', 56, 32);
             game.load.spritesheet('colorOutput', 'assets/color_output_spritesheet.png', 59, 20);
@@ -1214,6 +1234,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             topBars[ 'IR' ] = game.add.sprite( positionIR.x+1, positionIR.y+1,'sensorBar');
             topBars[ 'ultrasonic' ] = game.add.sprite( positionUltrasonic.x+1, positionUltrasonic.y+1,'sensorBar');
             //topBars[ 'screen' ] = game.add.sprite( positionScreen.x+1, positionScreen.y+1,'sensorBar');
+            topBars[ 'control' ] = game.add.sprite( positionControl.x+1, positionControl.y+1, 'sensorBar' );
 
           /* Labels */
             labelSystem = game.add.text(positionSystem.x+8, positionSystem.y+1+browserFix, "System", textStyles.title);
@@ -1221,13 +1242,26 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             status.statusDisplay =  game.add.text(positionSystem.x+12, positionSystem.y+61+browserFix, "running...", textStyles.status);
 
             var botLabelivider = game.add.sprite(positionSystem.x+95,positionSystem.y+33,'dividerPair');
-            var botLabel = game.add.text(positionSystem.x+98, positionSystem.y+36+browserFix,"Controlling bot:", { font: "13px Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif", fill: "#bcbcbc" } );
+            var botLabel = game.add.text(positionSystem.x+103, positionSystem.y+36+browserFix,"Selected bot:", { font: "13px Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif", fill: "#bcbcbc" } );
             if ( botId === '' ) bot.nameDisplay = game.add.text(positionSystem.x+91, positionSystem.y+62+browserFix, "No robot selected ", textStyles.selectBot);
             else { 
                 displayName( botName );
             }
 
             battery.levelDisplay = game.add.text( positionSystem.x+216, positionSystem.y+61, Math.round(battery.level * 100) + " %", textStyles.status );
+
+            userControl.labelControl = game.add.text( positionControl.x+8, positionControl.y+1+browserFix, "User Control", textStyles.title );
+            userControl.labelViewers = game.add.text( positionControl.x+12, positionControl.y+32+browserFix, "Viewers:", textStyles.label );
+            userControl.labelWaiters = game.add.text( positionControl.x+12, positionControl.y+55+browserFix, "Waiters:", textStyles.label );
+            userControl.labelCurrentUser = game.add.text( positionControl.x+12, positionControl.y+78+browserFix, "In Control:", textStyles.label );
+            userControl.labelTime = game.add.text( positionControl.x+12, positionControl.y+101+browserFix, "Seconds Left:", textStyles.label );
+            userControl.labelYourName = game.add.text( positionControl.x+12, positionControl.y+124+browserFix, "Your Name:", textStyles.label );
+
+            userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
+            userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, userControl.waitCount, textStyles.data );
+            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser, textStyles.status );
+            userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time, textStyles.data );
+            userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName, textStyles.status );
 
             labelTouch = game.add.text(positionTouch.x+8, positionTouch.y+1+browserFix, "Touch Sensor", textStyles.title);
             labelTouched = game.add.text(positionTouch.x+12, positionTouch.y+32+browserFix, "Touched", textStyles.label);
@@ -1254,6 +1288,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             statusButton = game.add.button(positionSystem.x+10, positionSystem.y+33, 'statusButton', actionStopOnClick);
             statusButton.setFrames(1,0,0,0);
             statusButton.input.useHandCursor = true;
+          /* User Control buttons */
+            userControl.requestControlButton = game.add.button(positionControl.x+125, positionSystem.y+33, 'requestControlButton', actionRequestControl);
+            userControl.requestControlButton.setFrames(1,0,0,0);
+            userControl.requestControlButton.input.useHandCursor = true;
+            userControl.inputNameButton = game.add.button(positionControl.x+195, positionSystem.y+80, 'inputNameButton', actionRequestControl);
+            userControl.inputNameButton.setFrames(1,0,0,0);
+            userControl.inputNameButton.input.useHandCursor = true;
           /* Touch Sensor */
             touchIndicator = game.add.sprite(positionTouch.x+68, positionTouch.y+30, 'touchIndicator');
             touchIndicator.animations.add('up', [0], 1);
@@ -1847,6 +1888,12 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             channel.getKeyspace(botId).put( dashKey, { 'speed': motors[ motor ].speed, 'direction': "stopped", 'directionSwapped': motors[ motor ].directionSwapped } );
         }
       //=============================================================================
+        function actionRequestControl () {
+            //
+        }
+        function actionChangeName () {
+            //
+        }
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {
                 statusButton.setFrames(2,2,2,2);

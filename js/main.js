@@ -737,7 +737,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             currentUser : 'nobody',
             textCurrentUser : '',
             labelYourName : '',
-            yourName : 'anonymous',
+            yourName : client.clientId().slice(0,8),
             textYourName : '',
             labelTime : '',
             time : 60,
@@ -1334,7 +1334,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             userControl.requestControlButton = game.add.button(positionControl.x+125, positionSystem.y+33, 'requestControlButton', actionRequestControl);
             userControl.requestControlButton.setFrames(1,0,2,0);
             userControl.requestControlButton.input.useHandCursor = true;
-            userControl.inputNameButton = game.add.button(positionControl.x+195, positionSystem.y+80, 'inputNameButton', actionRequestControl);
+            userControl.inputNameButton = game.add.button(positionControl.x+195, positionSystem.y+80, 'inputNameButton', actionInputName);
             userControl.inputNameButton.setFrames(1,0,2,0);
             userControl.inputNameButton.input.useHandCursor = true;
           /* Touch Sensor */
@@ -1955,8 +1955,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         function updateCurrentUser () {
             //
         }
-        function actionChangeName () {
-            //
+        function actionInputName () {
+            userControl.yourName = prompt("What would you like your new name to be?");
+            game.world.remove(userControl.textYourName);
+            userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName.slice(0,13), textStyles.status );
+
+            //need to share names on channel somewhere
+
         }
         newViewer = function ( clientId, selectedBot ) {
             viewers = channel.getKeyspace('viewers').get('viewers');

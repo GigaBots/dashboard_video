@@ -26,11 +26,12 @@ var gameStates = {}
 
 // global bot variables stored in client's browser
 var botStore = { // client id (GUID) : bot name
-    //'fakeBotId1' : 'Fake Bot 1',
-    //'fakeBotId2' : 'Fake Bot 2'
+    'fakeBotId1' : 'Fake Bot 1',
+    'fakeBotId2' : 'Fake Bot 2'
 }
 var botId = "", botIndex = 0, botName = "";
 var bot = { nameDisplay : "" }
+var viewers = {}
 
 // global functions
 var listenToBot;
@@ -43,6 +44,8 @@ var setInitialDashboardSettings;
 var displayName;
 var rearrangeDashboard;
 var rearrangeVideoDashboard;
+var newViewer;
+var updateViewers;
 
 // resize html elements - responsive
 function adjustHtml ( newWidth, newHeight) {
@@ -94,6 +97,9 @@ function appendDropdown( robotClientId ) {
         setSensorIDs();
         // bot name display on dashboard in system box
         displayName( botName );
+
+        newViewer( client.clientId(), botId );
+
     });
 }
 // add bots to drop-down menu in navbar (here, it's just for bots that are declared in botStore - our fakebots)
@@ -176,6 +182,16 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     appendDropdown( joined );
                 }
             }
+            else { //this is a viewer then
+                viewers = channel.getKeyspace('viewers').get('viewers');
+                if ( typeof viewers !== 'undefined' ) {
+                    viewers[ joined ] = '';
+                    channel.getKeyspace('viewers').put('viewers', viewers);
+                }
+                else {
+                    channel.getKeyspace('viewers').put('viewers', { joined : '' }); //first viewer
+                }
+            }
             channel.getKeyspace(joined).on('robot', function(val) {
                 if ( !(joined in botStore) ) {
                     // add already connected bots to botStore and the drop-down menu
@@ -183,7 +199,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     appendDropdown( joined );
                 }
             });
-            //console.dir(botStore);
         }, function(left) {
             console.log("leave " + left);
             if ( left in botStore ) {
@@ -193,7 +208,17 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 parent.removeChild( child );
                 delete botStore[ left ];
             }
+            if ( left in viewers ) {
+                viewers = channel.getKeyspace('viewers').get('viewers');
+                delete viewers[ left ];
+                channel.getKeyspace('viewers').put('viewers', viewers);
+            }
         });
+
+        channel.getKeyspace('viewers').on('viewers', function(val) {
+            console.log(val);
+            updateViewers( client.clientId(), val );
+        })
 
         /* Add new bot */
         $("#addBot").click(function() {
@@ -686,10 +711,10 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         var userControl = {
             labelControl : '',
             labelViewers : '',
-            viewCount : 1,
+            viewCount : 0,
             textViewCount : '',
             labelWaiters : '',
-            waitCount : 1,
+            waitCount : 0,
             textWaitCount : '',
             labelCurrentUser : '',
             currentUser : 'nobody',
@@ -1290,10 +1315,10 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             statusButton.input.useHandCursor = true;
           /* User Control buttons */
             userControl.requestControlButton = game.add.button(positionControl.x+125, positionSystem.y+33, 'requestControlButton', actionRequestControl);
-            userControl.requestControlButton.setFrames(1,0,0,0);
+            userControl.requestControlButton.setFrames(1,0,2,0);
             userControl.requestControlButton.input.useHandCursor = true;
             userControl.inputNameButton = game.add.button(positionControl.x+195, positionSystem.y+80, 'inputNameButton', actionRequestControl);
-            userControl.inputNameButton.setFrames(1,0,0,0);
+            userControl.inputNameButton.setFrames(1,0,2,0);
             userControl.inputNameButton.input.useHandCursor = true;
           /* Touch Sensor */
             touchIndicator = game.add.sprite(positionTouch.x+68, positionTouch.y+30, 'touchIndicator');
@@ -1892,6 +1917,39 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             //
         }
         function actionChangeName () {
+            //
+        }
+        newViewer = function ( clientId, selectedBot ) {
+            viewers = channel.getKeyspace('viewers').get('viewers');
+            viewers[ clientId ] = botId; // connect the user to the bot the user is controlling
+            channel.getKeyspace('viewers').put('viewers', viewers);
+            // console.dir(viewers);
+            // userControl.viewCount = 0;
+            // for ( var k in viewers ) {
+            //     console.log(viewers[ k ]);
+            //     if ( viewers[ k ] === viewers[ clientId ] && viewers[ clientId ] !== '' ) {
+            //         userControl.viewCount++;
+            //     }
+            // }
+            // game.world.remove(userControl.textViewCount);
+            // userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
+
+        }
+        updateViewers = function ( clientId, dataViewers ) {
+            userControl.viewCount = 0;
+            for ( var k in dataViewers ) {
+                if ( dataViewers[ k ] === dataViewers[ clientId ] && dataViewers[ clientId ] !== ''  ) {
+                    userControl.viewCount++;
+                }
+            }
+            game.world.remove(userControl.textViewCount);
+            userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
+
+        }
+        function updateWaiters () {
+            //
+        }
+        function updateCurrentUser () {
             //
         }
         function actionStopOnClick () {

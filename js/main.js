@@ -1947,9 +1947,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     bot.control = {};
                     bot.control.waiters = [];
                 }
-                var index = bot.control.waiters.indexOf( client.clientId() ); //check if user has already requested control
+                var index = bot.control.waiters.indexOfObject( 'clientId', client.clientId() ); //check if user has already requested control
                 if ( index === -1 ) { //the user isn't in the bot.control array, so let them request a turn
-                    bot.control.waiters.push(client.clientId()); 
+                    var newWaiter = {
+                        'clientId' : client.clientId(),
+                        'name' : userControl.yourName
+                    }
+                    bot.control.waiters.push( newWaiter ); 
                 } 
                 else {
                     alert("You've already requested control and are in line. Please try again after you've had your turn.");
@@ -1961,20 +1965,27 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             botQueueChannelData( botId ); // start this client listening on the channel for when a change is made to the selected bot's control keyspace
         }
+        Array.prototype.indexOfObject = function (property, value) { // for finding the index of an object with specified value or a property within an array
+            for ( var i = 0, len = this.length; i < len; i++) {
+                if (this[i][property] === value) return i;
+            }
+            return -1;
+        }
         function updateWaiters ( val ) {
             userControl.waitCount = val.waiters.length - 1; // waiters array
             game.world.remove(userControl.textWaitCount);
             userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, userControl.waitCount + '', textStyles.data );
-            
+            updateCurrentUser();
         }
         // function updateTime ( ) {
 
         // }
         function updateCurrentUser () {
-            //
-
-            //game.world.remove(userControl.textCurrentUser);
-            //userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser, textStyles.status );
+            bot.control.waiters.slice(0,1);
+            userControl.currentUser = bot.control.waiters[0].name;
+            if (userControl.currentUser === userControl.yourName ) userControl.currentUser = "You";
+            game.world.remove(userControl.textCurrentUser);
+            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
 
 
         }
@@ -2006,7 +2017,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             game.world.remove(userControl.textViewCount);
             userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
-
         }
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {

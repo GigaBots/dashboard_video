@@ -213,14 +213,27 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 delete botStore[ left ];
             }
             else {
+                // remove viewers that have disconnect
                 viewers = channel.getKeyspace('viewers').get('viewers');
                 delete viewers[ left ];
                 channel.getKeyspace('viewers').put('viewers', viewers);
+                //remove viewer from lists of bot they've requested to control
+                for ( var k in botStore ) {
+                    var controlArray = channel.getKeyspace(k).get('control');
+                    if ( typeof controlArray !== "undefined" ) {
+                        var index = bot.control.indexOf( client.clientId() ); //check if viewer has already requested control
+                        if ( index !== -1 ) { //the user is in the control array, so remove them
+                            controlArray.splice(index, 1);
+                            channel.getKeyspace(k).put('control', controlArray);
+                        }
+                    }                   
+                }
+
+
             }
         });
 
         channel.getKeyspace('viewers').on('viewers', function(val) {
-            console.log(val);
             updateViewers( client.clientId(), val );
         })
 
@@ -1923,7 +1936,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 if ( typeof bot.control === 'undefined' ) {
                     bot.control = [];
                 }
-                var index = $.inArray( client.clientId(), bot.control ); //check if user has already requested control
+                var index = bot.control.indexOf( client.clientId() ); //check if user has already requested control
                 if ( index === -1 ) { //the user isn't in the bot.control array, so let them request a turn
                     bot.control.push(client.clientId()); 
                 } 
@@ -1935,6 +1948,12 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             else {
                 alert("Please first select a Gigabot from the dropdown menu in the above navigation bar.");
             }
+        }
+        function updateWaiters () {
+            //
+        }
+        function updateCurrentUser () {
+            //
         }
         function actionChangeName () {
             //
@@ -1960,12 +1979,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove(userControl.textViewCount);
             userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
 
-        }
-        function updateWaiters () {
-            //
-        }
-        function updateCurrentUser () {
-            //
         }
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {

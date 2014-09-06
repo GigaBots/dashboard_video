@@ -138,7 +138,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         console.log(client.clientId());
         /* === Dashboard control panel === */
 
-        var canvasWidth = document.getElementById('gameWorld').offsetWidth;
+        //var canvasWidth = document.getElementById('gameWorld').offsetWidth;
+        var canvasWidth = 1132;
         var canvasHeight = 663;
         //var canvasWidth = 1132, canvasHeight = 530;
         

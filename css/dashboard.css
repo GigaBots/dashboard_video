@@ -215,3 +215,4 @@ html::-WebKit-scrollbar-thumb {
 	#videoCanvas {
 		margin-left: 285px; /* prevent the video canvas from moving to to the left, since it's otherwise centered */
 	}
+}

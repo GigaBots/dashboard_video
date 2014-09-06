@@ -46,6 +46,7 @@ var rearrangeDashboard;
 var rearrangeVideoDashboard;
 var newViewer;
 var updateViewers;
+var botQueueChannelData;
 
 // resize html elements - responsive
 function adjustHtml ( newWidth, newHeight) {
@@ -235,7 +236,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         channel.getKeyspace('viewers').on('viewers', function(val) {
             updateViewers( client.clientId(), val );
-        })
+        });
+
+        botQueueChannelData = function ( robotId ) {
+            channel.getKeyspace(robotId).on('control', function(val) {
+                updateWaiters( val );
+            });
+        }
 
         /* Add new bot */
         $("#addBot").click(function() {
@@ -1937,26 +1944,39 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             if ( botId !== '' ) {
                 bot.control = channel.getKeyspace( botId ).get('control');
                 if ( typeof bot.control === 'undefined' ) {
-                    bot.control = [];
+                    bot.control = {};
+                    bot.control.waiters = [];
                 }
-                var index = bot.control.indexOf( client.clientId() ); //check if user has already requested control
+                var index = bot.control.waiters.indexOf( client.clientId() ); //check if user has already requested control
                 if ( index === -1 ) { //the user isn't in the bot.control array, so let them request a turn
-                    bot.control.push(client.clientId()); 
+                    bot.control.waiters.push(client.clientId()); 
                 } 
                 else {
                     alert("You've already requested control and are in line. Please try again after you've had your turn.");
                 }
-                channel.getKeyspace( botId ).put( 'control', bot.control );
+                channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters } );
             }
             else {
                 alert("Please first select a Gigabot from the dropdown menu in the above navigation bar.");
             }
+            botQueueChannelData( botId ); // start this client listening on the channel for when a change is made to the selected bot's control keyspace
         }
-        function updateWaiters () {
-            //
+        function updateWaiters ( val ) {
+            userControl.waitCount = val.waiters.length - 1; // waiters array
+            game.world.remove(userControl.textWaitCount);
+            userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, userControl.waitCount + '', textStyles.data );
+            
         }
+        // function updateTime ( ) {
+
+        // }
         function updateCurrentUser () {
             //
+
+            //game.world.remove(userControl.textCurrentUser);
+            //userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser, textStyles.status );
+
+
         }
         function actionInputName () {
             userControl.yourName = prompt("What would you like your new name to be?");

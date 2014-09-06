@@ -182,16 +182,20 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     appendDropdown( joined );
                 }
             }
-            else { //this is a viewer then
-                viewers = channel.getKeyspace('viewers').get('viewers');
-                if ( typeof viewers !== 'undefined' ) {
-                    viewers[ joined ] = '';
-                    channel.getKeyspace('viewers').put('viewers', viewers);
-                }
-                else {
-                    channel.getKeyspace('viewers').put('viewers', { joined : '' }); //first viewer
-                }
-            }
+            // else { //this is a viewer then
+            //     viewers = channel.getKeyspace('viewers').get('viewers');
+            //     if ( typeof viewers !== 'undefined' ) {
+            //         if ( typeof viewers[ joined ] === 'undefined' ) {
+            //             console.log(joined + " is new");
+            //             viewers[ client ] = '';
+            //             channel.getKeyspace('viewers').put('viewers', viewers);
+            //         }
+
+            //     }
+            //     else {
+            //         channel.getKeyspace('viewers').put('viewers', { joined : '' }); //first viewer
+            //     }
+            // }
             channel.getKeyspace(joined).on('robot', function(val) {
                 if ( !(joined in botStore) ) {
                     // add already connected bots to botStore and the drop-down menu
@@ -208,7 +212,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 parent.removeChild( child );
                 delete botStore[ left ];
             }
-            if ( left in viewers ) {
+            else {
                 viewers = channel.getKeyspace('viewers').get('viewers');
                 delete viewers[ left ];
                 channel.getKeyspace('viewers').put('viewers', viewers);
@@ -1921,19 +1925,14 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         newViewer = function ( clientId, selectedBot ) {
             viewers = channel.getKeyspace('viewers').get('viewers');
-            viewers[ clientId ] = botId; // connect the user to the bot the user is controlling
+            if ( typeof viewers !== "undefined" ) {
+                viewers[ clientId ] = selectedBot; // connect the user to the bot the user is controlling
+            }
+            else {
+                viewers = {};
+                viewers[ clientId ] = selectedBot;
+            }
             channel.getKeyspace('viewers').put('viewers', viewers);
-            // console.dir(viewers);
-            // userControl.viewCount = 0;
-            // for ( var k in viewers ) {
-            //     console.log(viewers[ k ]);
-            //     if ( viewers[ k ] === viewers[ clientId ] && viewers[ clientId ] !== '' ) {
-            //         userControl.viewCount++;
-            //     }
-            // }
-            // game.world.remove(userControl.textViewCount);
-            // userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
-
         }
         updateViewers = function ( clientId, dataViewers ) {
             userControl.viewCount = 0;

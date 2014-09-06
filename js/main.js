@@ -1918,7 +1918,23 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
       //=============================================================================
         function actionRequestControl () {
-            //
+            if ( botId !== '' ) {
+                bot.control = channel.getKeyspace( botId ).get('control');
+                if ( typeof bot.control === 'undefined' ) {
+                    bot.control = [];
+                }
+                var index = $.inArray( client.clientId(), bot.control ); //check if user has already requested control
+                if ( index === -1 ) { //the user isn't in the bot.control array, so let them request a turn
+                    bot.control.push(client.clientId()); 
+                } 
+                else {
+                    alert("You've already requested control and are in line. Please try again after you've had your turn.");
+                }
+                channel.getKeyspace( botId ).put( 'control', bot.control );
+            }
+            else {
+                alert("Please first select a Gigabot from the dropdown menu in the above navigation bar.");
+            }
         }
         function actionChangeName () {
             //
@@ -2026,6 +2042,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             console.log(dt);
             var db = channel.getKeyspace(botId).get('batteryDash');
             console.log(db);
+            var dControl = channel.getKeyspace(botId).get('control');
+            console.log(dControl);
         }
 
     //==============================================================================================================================

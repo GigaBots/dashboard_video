@@ -47,6 +47,7 @@ var rearrangeVideoDashboard;
 var newViewer;
 var updateViewers;
 var botQueueChannelData;
+var updateTime;
 
 // resize html elements - responsive
 function adjustHtml ( newWidth, newHeight) {
@@ -99,6 +100,7 @@ function appendDropdown( robotClientId ) {
         // bot name display on dashboard in system box
         displayName( botName );
         newViewer( client.clientId(), botId );
+        updateTime( botId );
 
     });
 }
@@ -732,6 +734,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         /* User control queue */
         var positionControl = { x : 856, y : 1 }
+        var controlInterval = 30;
         var userControl = {
             labelControl : '',
             labelViewers : '',
@@ -747,7 +750,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             yourName : client.clientId().slice(0,8),
             textYourName : '',
             labelTime : '',
-            time : 60,
+            time : controlInterval,
             textTime : '',
         }
         var requestControlButton;
@@ -1975,7 +1978,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             userControl.waitCount = val.waiters.length - 1; // waiters array
             game.world.remove(userControl.textWaitCount);
             userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, userControl.waitCount + '', textStyles.data );
-            updateCurrentUser();
+            if (userControl.waitCount === 0) {
+                updateCurrentUser();
+            }
         }
         // function updateTime ( ) {
 
@@ -1987,7 +1992,31 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove(userControl.textCurrentUser);
             userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
 
+            userControl.time = controlInterval;
+            setUserTimer = setInterval( function() { userTimer() }, 1000 );        
 
+        }
+        var setUserTimer
+        function userTimer() {
+            if ( userControl.time > 0 ) {
+                userControl.time--;
+                bot.control = channel.getKeyspace( botId ).get('control');
+                bot.control.waiters[0].time = userControl.time;
+                channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters })
+                game.world.remove(userControl.textTime);
+                userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time + '', textStyles.data );
+            }
+            else {
+                clearInterval(setUserTimer);
+                updateCurrentUser();
+            }
+        }
+        updateTime = function ( botId ) {
+            bot.control = channel.getKeyspace( botId ).get('control');
+            userControl.time = bot.control.waiters[0].time;
+            game.world.remove(userControl.textTime);
+            userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time + '', textStyles.data );
+            
         }
         function actionInputName () {
             userControl.yourName = prompt("What would you like your new name to be?");

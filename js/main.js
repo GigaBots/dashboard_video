@@ -97,7 +97,6 @@ function appendDropdown( robotClientId ) {
         setSensorIDs();
         // bot name display on dashboard in system box
         displayName( botName );
-
         newViewer( client.clientId(), botId );
 
     });
@@ -1209,9 +1208,12 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         displayName = function( robotName ) {
             game.world.remove( bot.nameDisplay );
-            if ( robotName.length > 15 ) var botNameDisplay = robotName.slice(0, 15);
+            if ( robotName.length > 14 ) var botNameDisplay = robotName.slice(0, 14);
             else var botNameDisplay = robotName;
             bot.nameDisplay = game.add.text(positionSystem.x+145-botNameDisplay.length*60/16, positionSystem.y+61+browserFix, botNameDisplay, textStyles.status);
+            // update the title for the User Control box too
+            game.world.remove(userControl.labelControl);
+            userControl.labelControl = game.add.text( positionControl.x+8, positionControl.y+1+browserFix, "User Control for " + robotName.slice(0,13), textStyles.title );
         }
       //==============================================================================================================================
         function preload() {

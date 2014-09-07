@@ -2002,23 +2002,23 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             else {
                 if ( val.waiters[0].time === 0 ) {
-                    //updateCurrentUser( val );
+                    console.log("need to update the current user");
+                    updateCurrentUser( val );
                 }
             }
         }
-        // function updateTime ( ) {
-
-        // }
 
         function updateYou() {
-            
             if ( bot.control.waiters[0].time > 0 ) {
             }
             else {
+                updateCurrentUserName( bot.control );
                 userControl.time = controlInterval;
+                updateTime( userControl.time );
                 setUserTimer = setInterval( function() { userTimer() }, 1000 );
             }
         }
+        var setUserTimer
         function userTimer() {
             bot.control.waiters = val.waiters;
             if ( bot.control.waiters[0].time > 0 ) {
@@ -2035,6 +2035,12 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         }
 
+        function updateCurrentUserName( val ) {
+            userControl.currentUser = val.waiters[0].name;
+            game.world.remove(userControl.textCurrentUser);
+            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
+
+        }
         function updateCurrentUser( val ) {
             console.log(val);
             bot.control.waiters = val.waiters;
@@ -2042,16 +2048,18 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             userControl.currentUser = bot.control.waiters[0].name;
             userControl.time = bot.control.waiters[0].time;
 
-            if ( bot.control.waiters[0].clientId === client.clientId() ) {
-                userControl.currentUser = "You";
-                setUserTimer = setInterval( function() { userTime( bot.control.waiters[0].clientId, val ) }, 1000 );
-            }
 
-            game.world.remove(userControl.textCurrentUser);
-            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
+
+            // if ( bot.control.waiters[0].clientId === client.clientId() ) {
+            //     userControl.currentUser = "You";
+            //     setUserTimer = setInterval( function() { userTime( bot.control.waiters[0].clientId, val ) }, 1000 );
+            // }
+
+            // game.world.remove(userControl.textCurrentUser);
+            // userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
 
         }
-        var setUserTimer
+        
         function userTimerasdf( clientId, val ) {
             console.log(val);
             bot.control.waiters = val.waiters;
@@ -2094,14 +2102,14 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 updateCurrentUser();
             }
         }
-        updateTime = function ( botId ) {
-            bot.control = channel.getKeyspace( botId ).get('control');
-            if ( typeof bot.control !== 'undefined' ); {
-                userControl.time = bot.control.waiters[0].time;
-                game.world.remove(userControl.textTime);
-                userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time + '', textStyles.data );
-            }
-        }
+        // updateTime = function ( botId ) {
+        //     bot.control = channel.getKeyspace( botId ).get('control');
+        //     if ( typeof bot.control !== 'undefined' ); {
+        //         userControl.time = bot.control.waiters[0].time;
+        //         game.world.remove(userControl.textTime);
+        //         userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time + '', textStyles.data );
+        //     }
+        // }
         function actionInputName () {
             userControl.yourName = prompt("What would you like your new name to be?");
             game.world.remove(userControl.textYourName);

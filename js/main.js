@@ -269,7 +269,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         });
         botQueueChannelData = function ( robotId, selectionIndex ) {
             var newBotSelectionData = channel.getKeyspace(robotId).get('control');
-            if ( typeof newBotSelectionData === "undefined" ) {
+            if ( typeof newBotSelectionData === "undefined" || newBotSelectionData.waiters.length === 0 ) {
                 setInitialUserControlDashboard();
             }
             channel.getKeyspace(robotId).on('control', function(val) {
@@ -2116,9 +2116,10 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
         }
         setInitialUserControlDashboard = function() {
-                updateWaitCountText(0);
-                updateTimeText(0);
-                updateCurrentUserText('nobody');
+            console.log("this bot is not being used right now, so initializing user control data");
+            updateWaitCountText(0);
+            updateTimeText('');
+            updateCurrentUserText('nobody');
         }
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {

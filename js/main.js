@@ -1994,19 +1994,21 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     console.log("foo");
                 } 
                 else if ( userControl.timerRunning === false ) {
-                    userControl.timerRunning = true;
                     if ( val.waiters.length === 1 ) { //you're the only user, so you can continue controlling
                         console.log("you're the only user, so you can continue controlling");
+                        userControl.timerRunning = true;
                         updateYourUser();
                     }
-                    else {
-                        console.log("bar");
+                    else if ( val.waiters.length > 1) { // others are waiting
+                        console.log( "Others are waiting. Switch to the next user");
+                        bot.control = val;
+                        bot.control.waiters.splice(0,1); // remove the user in first place
+                        channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
                     }
                 }
             }
             else if ( val.waiters[0].clientId !== client.clientId ) { // somebody else is at the top of the list
-                //updateCurrentUser( val );
-
+                console.log("update current user");
             }
             userControl.waitCount = val.waiters.length - 1; // waiters array
             game.world.remove(userControl.textWaitCount);
@@ -2020,8 +2022,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
 
         }
-
-        var setYourUserTimer;
+        var setYourUserTimer; // setInterval function variable name
         function updateYourUser() {
             userControl.time = controlDuration; // preset time duration
             updateTimeText( userControl.time );
@@ -2036,17 +2037,16 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
             }
             else {
-                // console.log( setYourUserTimer);
                 console.log("Ready for next user. If there aren't any, you can continue controlling");
                 clearInterval( setYourUserTimer );
                 userControl.timerRunning = false;
-                var newData = channel.getKeyspace( botId ).get( 'control' )
-                updateWaiters( newData );
+                bot.control = channel.getKeyspace( botId ).get( 'control' );
+                updateWaiters( bot.control );
             }
         }
-
         // update text only
         function updateTimeText( time ) {
+            console.log( time );
             game.world.remove( userControl.textTime );
             userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, time + '', textStyles.data );
         }
@@ -2054,143 +2054,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove(userControl.textCurrentUser);
             userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, name.slice(0,8), textStyles.status );
         }
-
-
-        // function updateWaiters ( val ) {
-        //     userControl.waitCount = val.waiters.length - 1; // waiters array
-        //     game.world.remove(userControl.textWaitCount);
-        //     userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, userControl.waitCount + '', textStyles.data );
-        //     bot.control.waiters = val.waiters;
-        //     if ( bot.control.waiters[0].clientId === client.clientId() ) { // || userControl.waitCount === 0 )  {
-        //         updateYou( val );
-        //     }
-        //     else {
-        //         bot.control.waiters = val.waiters;
-        //         updateTimeText( bot.control.waiters[0].time );
-        //         updateCurrentUserText( bot.control.waiters[0].name );
-        //         if ( val.waiters[0].time === 0 ) {
-        //             console.log("need to update the current user");
-        //             //updateCurrentUser( val );
-        //         }
-        //     }
-        // }
-
-        // function updateYou( val ) {
-        //     if ( bot.control.waiters[0].time > 0 ) {
-        //     }
-        //     else {
-        //         updateCurrentUserText( bot.control.waiters[0].name );
-        //         userControl.time = controlDuration;
-        //         updateTimeText( userControl.time );
-        //         setYourUserTimer = setInterval( function() { yourUserTimer( val ) }, 1000 );
-        //     }
-        // }
-        // var setYourUserTimer
-        // function yourUserTimer( val ) {
-        //     bot.control.waiters = val.waiters;
-        //     if ( userControl.time > 0 ) {
-        //         bot.control.waiters[0].time = userControl.time = userControl.time - 1;
-        //         channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
-        //         updateTimeText( userControl.time );
-        //     }
-        //     else {
-        //         clearInterval(setYourUserTimer);
-        //         updateCurrentUser( val );
-        //     }
-        // }
-        // function updateTimeText( time ) {
-        //     game.world.remove(userControl.textTime);
-        //     userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, time + '', textStyles.data );
-
-        // }
-        // function updateTime( time ) {
-
-        // }
-
-
-
-        // function updateCurrentUserText( name ) {
-        //     game.world.remove(userControl.textCurrentUser);
-        //     userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, name.slice(0,8), textStyles.status );
-        // }
-        // function updateCurrentUser( val ) {
-        //     console.log(val);
-        //     bot.control.waiters = val.waiters;
-        //     bot.control.waiters.slice(0,1);
-        //     userControl.currentUser = bot.control.waiters[0].name;
-        //     updateCurrentUserText( userControl.currentUser );
-        //     //userControl.time = bot.control.waiters[0].time;
-
-
-
-        //     // if ( bot.control.waiters[0].clientId === client.clientId() ) {
-        //     //     userControl.currentUser = "You";
-        //     //     setUserTimer = setInterval( function() { userTime( bot.control.waiters[0].clientId, val ) }, 1000 );
-        //     // }
-
-        //     // game.world.remove(userControl.textCurrentUser);
-        //     // userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
-
-        // }
-        //////////////////
-        
-        // function userTimerasdf( clientId, val ) {
-        //     console.log(val);
-        //     bot.control.waiters = val.waiters;
-        //     if ( bot.control.waiters[0].time > 0 ) {
-        //         bot.control.waiters[0].time--;
-        //         channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
-        //     }
-        //     else {
-        //         updateCurrentUser( val );
-        //     }
-        // }
-
-
-        // function updateCurrentUser () {
-        //     bot.control.waiters.slice(0,1);
-        //     userControl.currentUser = bot.control.waiters[0].name;
-        //     if (userControl.currentUser === userControl.yourName ) {
-        //         userControl.currentUser = "You";
-        //         setUserTimer = setInterval( function() { userTime( bot.control.waiters[0].clientId ) }, 1000 );
-        //     }
-        //     game.world.remove(userControl.textCurrentUser);
-        //     userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser.slice(0,8), textStyles.status );
-
-        //     userControl.time = controlDuration;
-        //     setUserTimer = setInterval( function() { userTimer() }, 1000 );        
-
-        // }
-        // var setUserTimer
-        // function userTimer() {
-        //     if ( userControl.time > 0 ) {
-        //         userControl.time--;
-        //         bot.control = channel.getKeyspace( botId ).get('control');
-        //         bot.control.waiters[0].time = userControl.time;
-        //         channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters })
-        //         game.world.remove(userControl.textTime);
-        //         userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time + '', textStyles.data );
-        //     }
-        //     else {
-        //         clearInterval(setUserTimer);
-        //         updateCurrentUser();
-        //     }
-        // }
-        // updateTime = function ( botId ) {
-        //     bot.control = channel.getKeyspace( botId ).get('control');
-        //     if ( typeof bot.control !== 'undefined' ); {
-        //         userControl.time = bot.control.waiters[0].time;
-        //         game.world.remove(userControl.textTime);
-        //         userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time + '', textStyles.data );
-        //     }
-        // }
+        // let user update his/her name
         function actionInputName () {
             userControl.yourName = prompt("What would you like your new name to be?");
             game.world.remove(userControl.textYourName);
             userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName.slice(0,13), textStyles.status );
-
-            //need to share names on channel somewhere
-
         }
         newViewer = function ( clientId, selectedBot ) {
             viewers = channel.getKeyspace('viewers').get('viewers');

@@ -46,8 +46,8 @@ var rearrangeDashboard;
 var rearrangeVideoDashboard;
 var newViewer;
 var updateViewers;
+var updateWaiters;
 var botQueueChannelData;
-var updateTime;
 var indexOfObject;
 
 // resize html elements - responsive
@@ -101,7 +101,7 @@ function appendDropdown( robotClientId ) {
         // bot name display on dashboard in system box
         displayName( botName );
         newViewer( client.clientId(), botId );
-        //updateTime( botId );
+        botQueueChannelData( botId );
 
     });
 }
@@ -209,15 +209,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             });
         }, function(left) {
             console.log("leave " + left);
-            if ( left in botStore ) {
-                // remove bots that have disconnected
+            if ( left in botStore ) { // remove bots that have disconnected
                 var parent = document.getElementById( "botSelectorList" );
                 var child = document.getElementById( left );
                 parent.removeChild( child );
                 delete botStore[ left ];
             }
-            else {
-                // remove viewers that have disconnect
+            else { // remove viewers/controllers that have disconnected
                 viewers = channel.getKeyspace('viewers').get('viewers');
                 delete viewers[ left ];
                 channel.getKeyspace('viewers').put('viewers', viewers);
@@ -225,10 +223,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 for ( var k in botStore ) {
                     var controlArray = channel.getKeyspace(k).get('control');
                     if ( typeof controlArray !== "undefined" ) {
-                        var index = indexOfObject( controlArray, "clientId", client.clientId() ); //check if viewer has already requested control
+                        var index = indexOfObject( controlArray.waiters, "clientId", left ); //check if viewer has already requested control
                         if ( index !== -1 ) { //the user is in the control array, so remove them
-                            controlArray.splice(index, 1);
-                            channel.getKeyspace(k).put('control', controlArray);
+                            console.log("foo");
+                            controlArray.waiters.splice(index, 1);
+                            channel.getKeyspace(k).put('control', { 'waiters' : controlArray.waiters } );
                         }
                     }                   
                 }
@@ -240,7 +239,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         channel.getKeyspace('viewers').on('viewers', function(val) {
             updateViewers( client.clientId(), val );
         });
-
         botQueueChannelData = function ( robotId ) {
             channel.getKeyspace(robotId).on('control', function(val) {
                 console.log(val);
@@ -1945,6 +1943,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             channel.getKeyspace(botId).put( dashKey, { 'speed': motors[ motor ].speed, 'direction': "stopped", 'directionSwapped': motors[ motor ].directionSwapped } );
         }
       //=============================================================================
+      /* User control & queueing stuff */
         function actionRequestControl () {
             if ( botId !== '' ) {
                 bot.control = channel.getKeyspace( botId ).get('control');
@@ -1983,7 +1982,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             return -1; 
         };
         userControl.timerRunning = false;
-        function updateWaiters( val ) {
+        updateWaiters = function( val ) {
             if ( val.waiters[0].clientId === client.clientId() ) { // this is you at the top of the list
                 if ( typeof val.waiters[0].time === "undefined" ) { // timer hasn't started yet
                     console.log("updateYourUser");
@@ -2020,7 +2019,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             if ( typeof val.waiters[0].name !== "undefined" ) {
                 updateCurrentUserText( val.waiters[0].name );
             }
-
         }
         var setYourUserTimer; // setInterval function variable name
         function updateYourUser() {
@@ -2054,12 +2052,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove(userControl.textCurrentUser);
             userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, name.slice(0,8), textStyles.status );
         }
-        // let user update his/her name
-        function actionInputName () {
-            userControl.yourName = prompt("What would you like your new name to be?");
-            game.world.remove(userControl.textYourName);
-            userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName.slice(0,13), textStyles.status );
-        }
         newViewer = function ( clientId, selectedBot ) {
             viewers = channel.getKeyspace('viewers').get('viewers');
             if ( typeof viewers !== "undefined" ) {
@@ -2080,6 +2072,14 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             game.world.remove(userControl.textViewCount);
             userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
+        }
+        // let user update his/her name
+        function actionInputName () {
+            if ( userControl.timerRunning === false ) {
+                userControl.yourName = prompt("What would you like your new name to be?");
+                game.world.remove(userControl.textYourName);
+                userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName.slice(0,13), textStyles.status );
+            }
         }
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {

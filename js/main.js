@@ -2023,27 +2023,41 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             //bot.control.waiters = channel.getKeyspace( botId ).get( 'waiters' );
             userControl.time = controlDuration; // preset time duration
             updateTimeText( userControl.time );
-            setYourUserTimer = setInterval( function() { yourUserTimer() }, 1000 );
+            setInterval( (function yourUserTimer() {
+                if ( userControl.time > 0 ) {
+                    userControl.time--;
+                    bot.control = channel.getKeyspace( botId ).get( 'control' );
+                    bot.control.waiters[0].time = userControl.time;
+                    channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
+                }
+                else {
+                    // console.log( setYourUserTimer);
+                    clearInterval( setYourUserTimer );
+                    console.log( setYourUserTimer);
+                    console.log("Ready for next user. If there aren't any, you can continue controlling");
+                }
+                return yourUserTimer;
+            })(), 1000);
+            //setYourUserTimer = setInterval( function() { yourUserTimer() }, 1000 );
 
         }
-        function yourUserTimer() {
-            console.log( setYourUserTimer);
-            //console.log("timer");
-            if ( userControl.time > 0 ) {
-                userControl.time--;
-                bot.control = channel.getKeyspace( botId ).get( 'control' );
-                bot.control.waiters[0].time = userControl.time;
-                channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
-            }
-            else {
-                setYourUserTimer = null;
-                // console.log( setYourUserTimer);
-                clearInterval( setYourUserTimer );
-                console.log( setYourUserTimer);
-                console.log("Ready for next user. If there aren't any, you can continue controlling");
-            }
+        // function yourUserTimer  () {
+        //     console.log( setYourUserTimer);
+        //     //console.log("timer");
+        //     if ( userControl.time > 0 ) {
+        //         userControl.time--;
+        //         bot.control = channel.getKeyspace( botId ).get( 'control' );
+        //         bot.control.waiters[0].time = userControl.time;
+        //         channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
+        //     }
+        //     else {
+        //         // console.log( setYourUserTimer);
+        //         clearInterval( setYourUserTimer );
+        //         console.log( setYourUserTimer);
+        //         console.log("Ready for next user. If there aren't any, you can continue controlling");
+        //     }
             
-        }
+        // }
 
 
 

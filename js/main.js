@@ -35,26 +35,26 @@ var botsControlled = [];
 var viewers = {}
 
 // global functions
-var listenToBot;
-var getInitialTouchData;
-var setInitialTouchData;
-var getInitialBatteryLevel;
-var setInitialBatteryLevel;
-var setSensorIDs;
-var setInitialDashboardSettings;
-var displayName;
-var rearrangeDashboard;
-var rearrangeVideoDashboard;
-var newViewer;
-var updateViewers;
-var updateWaiters;
-var botQueueChannelData;
-var indexOfObject;
-var userChangeBot;
-var setInitialUserControlDashboard;
+var listenToBot,
+    getInitialTouchData,
+    setInitialTouchData,
+    getInitialBatteryLevel,
+    setInitialBatteryLevel,
+    setSensorIDs,
+    setInitialDashboardSettings,
+    displayName,
+    rearrangeDashboard,
+    rearrangeVideoDashboard,
+    newViewer,
+    updateViewers,
+    updateWaiters,
+    botQueueChannelData,
+    indexOfObject,
+    userChangeBot,
+    setInitialUserControlDashboard;
 
 /* user control queue stuff */
-var controlDuration = 20;
+var controlDuration = 15;
 var userControl = {
     labelControl : '',
     labelViewers : '',
@@ -205,7 +205,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
         });
 
-
         channel.onSubscribers( function(joined) { // keep track of subscribers to the gigabots channel, and determine which subscribers are robots
             console.log('join ' + joined);
             var roboInfo = channel.getKeyspace(joined).get('robot');
@@ -216,20 +215,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     appendDropdown( joined );
                 }
             }
-            // else { //this is a viewer then
-            //     viewers = channel.getKeyspace('viewers').get('viewers');
-            //     if ( typeof viewers !== 'undefined' ) {
-            //         if ( typeof viewers[ joined ] === 'undefined' ) {
-            //             console.log(joined + " is new");
-            //             viewers[ client ] = '';
-            //             channel.getKeyspace('viewers').put('viewers', viewers);
-            //         }
-
-            //     }
-            //     else {
-            //         channel.getKeyspace('viewers').put('viewers', { joined : '' }); //first viewer
-            //     }
-            // }
             channel.getKeyspace(joined).on('robot', function(val) {
                 if ( !(joined in botStore) ) {
                     // add already connected bots to botStore and the drop-down menu
@@ -278,7 +263,29 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     updateWaiters( val );
                 }
                 else {
-                    return 0;
+                    if ( val.waiters[0].clientId === client.clientId() ) { //it's your turn to control a bot previously in your waitlist
+                        var removeFromWaitList = function () {
+                            console.log("remove from wait list");
+                        }
+                        function switchBotPrompt() {
+                            
+                        }
+                        if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
+                            var answer = confirm("It's your turn to control " + botStore[robotId] + ", for which you were waiting.\nWould you like to control " + botStore[robotId] + " now or let the next waiter gain control?");
+                            if (answer) { //answered yes
+                                console.log("yes");
+                            }
+                            else {
+                                removeFromWaitList();
+                            }
+                        }
+                        else { // you are controlling a bot, so we'll skip you for this turn;
+                            removeFromWaitList();
+                        }
+                    }
+                    else {
+                        return 0;
+                    }
                 }
             });
         }
@@ -2017,7 +2024,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     updateYourUser();
                 }
                 else if ( val.waiters[0].time > 0 ) {
-                    console.log("foo");
                 } 
                 else if ( userControl.timerRunning === false ) {
                     if ( val.waiters.length === 1 ) { //you're the only user, so you can continue controlling
@@ -2026,7 +2032,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                         updateYourUser();
                     }
                     else if ( val.waiters.length > 1) { // others are waiting
-                        console.log( "Others are waiting. Switch to the next user");
+                        console.log( "others are waiting. Switch to the next user");
                         bot.control = val;
                         bot.control.waiters.splice(0,1); // remove the user in first place
                         channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
@@ -2048,11 +2054,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
         }
 
-        var setYourUserTimer; // setInterval function variable name
+        var yourUserTimerIntervalId; // setInterval function variable name
         function updateYourUser() {
             userControl.time = controlDuration; // preset time duration
             updateTimeText( userControl.time );
-            setYourUserTimer = setInterval( function() { yourUserTimer() }, 1000 );
+            yourUserTimerIntervalId = setInterval( function() { yourUserTimer() }, 1000 );
 
         }
         function yourUserTimer  () {
@@ -2063,8 +2069,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
             }
             else {
-                console.log("Ready for next user. If there aren't any, you can continue controlling");
-                clearInterval( setYourUserTimer );
+                console.log("ready for next user. If there aren't any, you can continue controlling");
+                clearInterval( yourUserTimerIntervalId );
                 userControl.timerRunning = false;
                 bot.control = channel.getKeyspace( botId ).get( 'control' );
                 updateWaiters( bot.control );
@@ -2075,7 +2081,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             if ( typeof controlArray !== "undefined" ) {
                 var index = indexOfObject( controlArray.waiters, "clientId", client.clientId() ); //check if viewer has already requested control
                 if ( index === 0 ) { //the user was currently controlling a bot, so move to the next user
-                    clearInterval( setYourUserTimer );
+                    clearInterval( yourUserTimerIntervalId );
                     controlArray.waiters.splice(index, 1);
                     channel.getKeyspace( previousBotId ).put('control', { 'waiters' : controlArray.waiters } );
                 }

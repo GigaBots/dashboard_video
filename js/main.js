@@ -51,10 +51,11 @@ var listenToBot,
     botQueueChannelData,
     indexOfObject,
     userChangeBot,
+    selectBot,
     setInitialUserControlDashboard;
 
 /* user control queue stuff */
-var controlDuration = 15;
+var controlDuration = 10;
 var userControl = {
     labelControl : '',
     labelViewers : '',
@@ -116,20 +117,23 @@ function appendDropdown( robotClientId ) {
             userChangeBot( botId );
         }
         botId = this.id;
-        console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
-        botName = botStore[ botId ];
-        botIndex++; // increment the index corresponding to the bot being listened to
-        botsControlled[ botIndex ] = botId;
-        listenToBot( botId, botIndex ); // start listening to the bot that was just selected
-        // dashboard and keyspace initializations:
-        getInitialTouchData( botId );
-        getInitialBatteryLevel( botId );
-        setInitialDashboardSettings( botId );
-        setSensorIDs();
-        // bot name display on dashboard in system box
-        displayName( botName );
-        newViewer( client.clientId(), botId );
-        botQueueChannelData( botId, botIndex );
+        selectBot = function( botId ) {
+            console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
+            botName = botStore[ botId ];
+            botIndex++; // increment the index corresponding to the bot being listened to
+            botsControlled[ botIndex ] = botId;
+            listenToBot( botId, botIndex ); // start listening to the bot that was just selected
+            // dashboard and keyspace initializations:
+            getInitialTouchData( botId );
+            getInitialBatteryLevel( botId );
+            setInitialDashboardSettings( botId );
+            setSensorIDs();
+            // bot name display on dashboard in system box
+            displayName( botName );
+            newViewer( client.clientId(), botId );
+            botQueueChannelData( botId, botIndex );
+        }
+        selectBot( botId );
     });
 }
 // add bots to drop-down menu in navbar (here, it's just for bots that are declared in botStore - our fakebots)
@@ -266,22 +270,41 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     if ( val.waiters[0].clientId === client.clientId() ) { //it's your turn to control a bot previously in your waitlist
                         var removeFromWaitList = function () {
                             console.log("remove from wait list");
-                        }
+
+                            //
+
+                        };
                         function switchBotPrompt() {
-                            
-                        }
-                        if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
-                            var answer = confirm("It's your turn to control " + botStore[robotId] + ", for which you were waiting.\nWould you like to control " + botStore[robotId] + " now or let the next waiter gain control?");
-                            if (answer) { //answered yes
-                                console.log("yes");
-                            }
-                            else {
+                            var controlPrompt = function() {
+                                if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
+                                    jConfirm("It's your turn to control " + botStore[robotId] + ", on which you were waiting. Would you like to control " + botStore[robotId] + " now or let the next waiter gain control?", 'Confirmation Dialog', function(answer) {
+                                        if (answer) { //answered yes
+                                            console.log("yes");
+                                            clearTimeout(clearPrompt);
+                                            botIndex = selectionIndex;
+                                            selectBot( robotId );
+                                        }
+                                        else {
+                                            removeFromWaitList();
+                                        }
+
+                                            //console.log('Confirmed: ' + answer, 'Confirmation Results');
+                                    });
+                                }
+                                else {
+                                    removeFromWaitList();
+                                }
+                            };
+                            controlPrompt();
+
+                            return function(){
+                                console.log("timeout, sorry!");
+                                answer = false;
                                 removeFromWaitList();
-                            }
+                            };
                         }
-                        else { // you are controlling a bot, so we'll skip you for this turn;
-                            removeFromWaitList();
-                        }
+                        var clearPrompt = switchBotPrompt();
+                        setTimeout(clearPrompt, 5050); // cancel loop
                     }
                     else {
                         return 0;

@@ -54,7 +54,7 @@ var userChangeBot;
 var setInitialUserControlDashboard;
 
 /* user control queue stuff */
-var controlDuration = 15;
+var controlDuration = 20;
 var userControl = {
     labelControl : '',
     labelViewers : '',
@@ -64,7 +64,7 @@ var userControl = {
     waitCount : 0,
     textWaitCount : '',
     labelCurrentUser : '',
-    currentUser : 'nobody',
+    currentUser : '',
     textCurrentUser : '',
     labelYourName : '',
     yourName : '',
@@ -1315,7 +1315,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             status.statusDisplay =  game.add.text(positionSystem.x+12, positionSystem.y+61+browserFix, "running...", textStyles.status);
 
             var botLabelivider = game.add.sprite(positionSystem.x+95,positionSystem.y+33,'dividerPair');
-            var botLabel = game.add.text(positionSystem.x+103, positionSystem.y+36+browserFix,"Selected bot:", { font: "13px Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif", fill: "#bcbcbc" } );
+            var botLabel = game.add.text(positionSystem.x+104, positionSystem.y+36+browserFix,"Selected bot:", { font: "13px Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif", fill: "#bcbcbc" } );
             if ( botId === '' ) bot.nameDisplay = game.add.text(positionSystem.x+91, positionSystem.y+62+browserFix, "No robot selected ", textStyles.selectBot);
             else { 
                 displayName( botName );
@@ -1946,7 +1946,12 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }               
             data.speed = speed;
             //console.log( "sending " + JSON.stringify(data));
-            channel.publish( data );
+            // only let the user currently in control actually send commands to the bot. Maybe for all adjustments too?
+            bot.control = channgel.getKeyspace( botId ).get('control');
+            if ( bot.control.waiters[0].clientId === client.clientId() ) {
+                channel.publish( data );
+            }
+            //channel.publish( data );
             var dashKey = motor + 'Dash';
             channel.getKeyspace(botId).put( dashKey, { 'speed': speed, 'direction': direction, 'directionSwapped': swapped } );
         }
@@ -1956,7 +1961,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             data.type = "motorStop";
             data.port = motor;
             //console.log( "sending " + JSON.stringify(data));
-            channel.publish( data );
+            bot.control = channgel.getKeyspace( botId ).get('control');
+            if ( bot.control.waiters[0].clientId === client.clientId() ) {
+                channel.publish( data );
+            }
+            //channel.publish( data );
             var dashKey = motor + 'Dash';
             channel.getKeyspace(botId).put( dashKey, { 'speed': motors[ motor ].speed, 'direction': "stopped", 'directionSwapped': motors[ motor ].directionSwapped } );
         }
@@ -2065,10 +2074,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             var controlArray = channel.getKeyspace( previousBotId ).get('control');
             if ( typeof controlArray !== "undefined" ) {
                 var index = indexOfObject( controlArray.waiters, "clientId", client.clientId() ); //check if viewer has already requested control
-                if ( index !== -1 ) { //the user is in the control array, so remove them
+                if ( index === 0 ) { //the user was currently controlling a bot, so move to the next user
                     clearInterval( setYourUserTimer );
                     controlArray.waiters.splice(index, 1);
                     channel.getKeyspace( previousBotId ).put('control', { 'waiters' : controlArray.waiters } );
+                }
+                else if ( index > 0 ) {
+                    console.log("you are still in the wait list for " + previousBotId);
                 }
             }
         }
@@ -2550,6 +2562,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         function enableKeyboard() {
             game.input.keyboard.disabled = false;
         }
+
 
         function publish(botCode) {
             channel.publish({ "type": "js", "js": botCode, "recipient": botId });

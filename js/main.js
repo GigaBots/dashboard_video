@@ -60,7 +60,7 @@ var userTimerTimeoutId;
 var startTimer;
 
 /* user control queue stuff */
-var controlDuration = 10;
+var controlDuration = 15;
 var userControl = {
     labelControl : '',
     labelViewers : '',
@@ -2042,10 +2042,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             return -1; 
         };
         
-        
         //userControl.timerRunning = false;
 
-        
         updateWaiters = function( val ) {
 
             if ( val.waiters[0].clientId !== userControl.prevController || val.waiters.length === 1 ) {
@@ -2058,35 +2056,40 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 startTimer = function( time, controller ) {
                     var updateTime = function() {
                         //userControl.timerRunning = true;
-                        time--;
-                        if ( val.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
-                            channel.getKeyspace( botId ).put( 'timer', { 'time' : time });
-                        }
-                        updateTimeText( time );
-                        console.log("time remaining for " + controller.name + ": " + time + " seconds");
+                        //console.log(val.waiters[0].clientId + " vs " + controller.clientId);
+                        //if ( val.waiters[0].clientId === controller.clientId ) {
+                            time--;
+                            if ( val.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
+                                channel.getKeyspace( botId ).put( 'timer', { 'time' : time });
+                            }
+                            updateTimeText( time );
+                            console.log("time remaining for " + controller.name + ": " + time + " seconds");
+                        //}
                     };
                     userTimerIntervalId = setInterval( updateTime, 1000 );
-                    return function() {
-                        clearInterval( userTimerIntervalId );
-                        if ( val.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
-                            channel.getKeyspace( botId ).put( 'timer', { 'time' : 0 });
-                        }
-                        if ( val.waiters.length === 1 ) { //you're the only user, so you can continue controlling
-                            console.log("you're the only user, so you can continue controlling");
-                            updateWaiters( val );
-                            //userControl.timerRunning = true;
-                        }
-                        else {
-                            console.log( "others are waiting. Switch to the next user");
-                            bot.control = val;
-                            bot.control.waiters.splice(0,1); // remove the user in first place
-                            channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
-                        }
-                        console.log("time's up");
-                    };
+                    userTimerTimeoutId = setTimeout( function(){
+                        userTimerTimeout()
+                    }, (controlDuration + 1) * 1000 );
                 }
-                userTimerTimeoutId = startTimer( controlDuration, val.waiters[0] );
-                setTimeout( userTimerTimeoutId, (controlDuration + 1) * 1000 );
+                function userTimerTimeout() {
+                    clearInterval( userTimerIntervalId );
+                    if ( val.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
+                        channel.getKeyspace( botId ).put( 'timer', { 'time' : 0 });
+                    }
+                    if ( val.waiters.length === 1 ) { //you're the only user, so you can continue controlling
+                        console.log("you're the only user, so you can continue controlling");
+                        updateWaiters( val );
+                        //userControl.timerRunning = true;
+                    }
+                    else {
+                        console.log( "others are waiting. Switch to the next user");
+                        bot.control = val;
+                        bot.control.waiters.splice(0,1); // remove the user in first place
+                        channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
+                    }
+                    console.log("time's up");
+                }
+                startTimer( controlDuration, val.waiters[0] );
             }
             else {
                 console.log(val.waiters[0].clientId + " is still in control");
@@ -2184,31 +2187,34 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             channel.getKeyspace('viewers').put('viewers', viewers);
 
+            // check if waiters, controller, or timer need to be updated for this new viewer
             bot.control = channel.getKeyspace(selectedBot).get('control');
-            if ( typeof bot.control.waiters !== "undefined" ) {
-                if ( typeof bot.control.waiters[0].name !== "undefined" ) {
-                    updateCurrentUserText( bot.control.waiters[0].name );
-                }
-                else {
-                    updateCurrentUserText( 'nobody' );
-                    console.log("nobody in control");
-                }
-                var timer = channel.getKeyspace(selectedBot).get('timer');
-                if ( typeof timer !== "undefined" ) {
-                    if ( typeof timer.time !== "undefined" ) {
-                        console.log("start timer in the middle");
-                        setTimeout( userTimerTimeoutId, (timer.time + 1) * 1000 );
+            if ( typeof bot.control !== "undefined" ) {
+                if ( typeof bot.control.waiters !== "undefined" ) {
+                    if ( typeof bot.control.waiters[0].name !== "undefined" ) {
+                        updateCurrentUserText( bot.control.waiters[0].name );
                     }
                     else {
-                        console.log("time undefined");
+                        updateCurrentUserText( 'nobody' );
+                        console.log("nobody in control");
+                    }
+                    var timer = channel.getKeyspace(selectedBot).get('timer');
+                    if ( typeof timer !== "undefined" ) {
+                        if ( typeof timer.time !== "undefined" ) {
+                            console.log("start timer in the middle");
+                            setTimeout( userTimerTimeoutId, (timer.time + 1) * 1000 );
+                        }
+                        else {
+                            console.log("time undefined");
+                        }
+                    }
+                    else {
+                        console.log("timer object undefined");
                     }
                 }
                 else {
-                    console.log("timer object undefined");
+                    console.log("waiters array undefined")
                 }
-            }
-            else {
-                console.log("waiters array undefined")
             }
         }
         updateViewers = function ( clientId, dataViewers ) {

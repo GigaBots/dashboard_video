@@ -55,7 +55,7 @@ var listenToBot,
     setInitialUserControlDashboard;
 
 /* user control queue stuff */
-var controlDuration = 10;
+var controlDuration = 20;
 var userControl = {
     labelControl : '',
     labelViewers : '',
@@ -270,41 +270,35 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     if ( val.waiters[0].clientId === client.clientId() ) { //it's your turn to control a bot previously in your waitlist
                         var removeFromWaitList = function () {
                             console.log("remove from wait list");
-
-                            //
-
+                            val.waiters.splice(0,1);
+                            channel.getKeyspace(robotId).put('control', { 'waiters' : val.waiters });
                         };
-                        function switchBotPrompt() {
-                            var controlPrompt = function() {
-                                if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
-                                    jConfirm("It's your turn to control " + botStore[robotId] + ", on which you were waiting. Would you like to control " + botStore[robotId] + " now or let the next waiter gain control?", 'Confirmation Dialog', function(answer) {
-                                        if (answer) { //answered yes
-                                            console.log("yes");
-                                            clearTimeout(clearPrompt);
-                                            botIndex = selectionIndex;
-                                            selectBot( robotId );
-                                        }
-                                        else {
-                                            removeFromWaitList();
-                                        }
-
-                                            //console.log('Confirmed: ' + answer, 'Confirmation Results');
-                                    });
+                        var promptTimeoutId;
+                        function controlPrompt() {
+                            jConfirm("It's your turn to control " + botStore[robotId] + ", on which you were waiting. Would you like to control " + botStore[robotId] + " now or let the next waiter gain control?", 'Option to Control Another Bot', function(answer) {
+                                if (answer) { //answered yes
+                                    console.log("yes");
+                                    clearTimeout(promptTimeoutId);
+                                    botIndex = selectionIndex;
+                                    selectBot( robotId );
                                 }
                                 else {
                                     removeFromWaitList();
                                 }
-                            };
-                            controlPrompt();
-
-                            return function(){
-                                console.log("timeout, sorry!");
-                                answer = false;
-                                removeFromWaitList();
-                            };
+                            });
+                            promptTimeoutId = setTimeout(function(){promptTimeOut()}, 6000);
                         }
-                        var clearPrompt = switchBotPrompt();
-                        setTimeout(clearPrompt, 5050); // cancel loop
+                        function promptTimeOut() {
+                            console.log("timeout, sorry");
+                            $('#popup_cancel').click(); // just click cancel for the user...
+                        }
+                        
+                        if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
+                            controlPrompt();
+                        }
+                        else {
+                            removeFromWaitList();
+                        }
                     }
                     else {
                         return 0;

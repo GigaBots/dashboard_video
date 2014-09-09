@@ -11,12 +11,11 @@
 function updateBar (progress, $element) {
     var progressBarWidth = progress * $element.width() / 100;
     $element.find('div').animate({ width: progressBarWidth }, 0).html(progress + "%&nbsp;");
-    if (progress === 100) {
+    if (progress >= 100) {
         $("#progressBar").remove();
     }
 }
-
-updateBar(24, $("#progressBar"));
+updateBar(2, $("#progressBar"));
 
 // global variables related to the game and states
 var client;
@@ -179,7 +178,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
     });
 
-    updateBar(59, $("#progressBar"));    
+    updateBar(11, $("#progressBar"));    
 
     function beginGame(client, channel) {
         console.log(client.clientId());
@@ -207,7 +206,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         game.state.add( 'newState', NewState );
 
-        updateBar(78, $("#progressBar"));
+        updateBar(28, $("#progressBar"));
 
         channel.onMessage( function(evt ) {
             var msg = evt.payload.getBytesAsJSON();
@@ -885,7 +884,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // user's code if uses "up" arrow but didn't hit submit before doing so.
         var tempCode;
 
-        updateBar(92,$("#progressBar"));
+        updateBar(31,$("#progressBar"));
 
         //===================================================
 
@@ -1310,9 +1309,29 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.image('dividerLine','assets/divider_line.png',144,1);
             game.load.image('dividerLine2','assets/divider_line_2.png',261,22);
             game.load.image('dividerPair','assets/divider_pair.png',99,24);
+            
         } //end preload
       //==============================================================================================================================
-        function create() {          
+
+        var interpolateBarId;
+        function estimateBar(p) {
+            updateBar(p,$("#progressBar"));
+            var x = 9;
+            var interpolateBar = function() {
+                p = p + x;
+                x++;
+                console.log("progress: " + p);
+                if ( p > 100 ) {
+                    clearInterval(interpolateBarId);
+                }
+                updateBar(p,$("#progressBar"));
+            }
+            interpolateBarId = setInterval(interpolateBar, 260);
+        }
+        estimateBar(34);
+    
+        function create() {  
+        
             updateBar(100, $("#progressBar")); 
             this.game.stage.disableVisibilityChange = true;
             game.input.keyboard.disabled = false;
@@ -1986,7 +2005,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             data.speed = speed;
             //console.log( "sending " + JSON.stringify(data));
             // only let the user currently in control actually send commands to the bot. Maybe for all adjustments too?
-            bot.control = channgel.getKeyspace( botId ).get('control');
+            bot.control = channel.getKeyspace( botId ).get('control');
             if ( bot.control.waiters[0].clientId === client.clientId() ) {
                 channel.publish( data );
             }

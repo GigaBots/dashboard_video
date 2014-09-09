@@ -11,12 +11,11 @@
 function updateBar (progress, $element) {
     var progressBarWidth = progress * $element.width() / 100;
     $element.find('div').animate({ width: progressBarWidth }, 0).html(progress + "%&nbsp;");
-    if (progress === 100) {
+    if (progress >= 100) {
         $("#progressBar").remove();
     }
 }
-
-updateBar(24, $("#progressBar"));
+updateBar(2, $("#progressBar"));
 
 // global variables related to the game and states
 var client;
@@ -132,15 +131,15 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
     });
 
-    updateBar(59, $("#progressBar"));    
+    updateBar(11, $("#progressBar"));    
 
     function beginGame(client, channel) {
         console.log(client.clientId());
         /* === Dashboard control panel === */
 
-        var canvasWidth = document.getElementById('gameWorld').offsetWidth;
+        //var canvasWidth = document.getElementById('gameWorld').offsetWidth;
+        var canvasWidth = 1132; //we're temporarily ignoring the reponsive stuff
         var canvasHeight = 663;
-        //var canvasWidth = 1132, canvasHeight = 530;
         
         game = new Phaser.Game(canvasWidth, canvasHeight, Phaser.AUTO, "gameWorld", {
             preload: preload, 
@@ -156,7 +155,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         game.state.add( 'newState', NewState );
 
-        updateBar(78, $("#progressBar"));
+        updateBar(25, $("#progressBar"));
 
         channel.onMessage( function(evt ) {
             var msg = evt.payload.getBytesAsJSON();
@@ -373,10 +372,10 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             for ( var i = 1; i <= numGangs; i++ ) {
                 positionGangs[ i ] = { x : 856, y : 161 + ( i - 1 ) * ( gangHeightMin + ( numCheckboxRows ) * 28 + 10 ) } // rightmost column position
             }
-            console.log(heightGangs);
             canvasHeight = 663;
             canvasWidth = 1132;
             adjustHtml( canvasWidth, canvasHeight );
+        
         }
         rearrangeVideoDashboard();
 
@@ -675,7 +674,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         var topBars = {}
         var dividers = {}
 
-        /* Play/stop button and status */
+        /* System info */
+        var positionSystem = { x : 1, y : 1 }
         var labelStatus, statusButton;
         var dashboardStatus = 1; // 1 = 'running/resumed', 0 = 'stopped/paused'
         var status = { statusDisplay : "running..." } // initially running
@@ -695,8 +695,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             // ultrasonic : ''
         }
 
-        /* System info */
-        var positionSystem = { x : 1, y : 1 }
+        /* User chat */
+        var positionChat = { x : 856, y : 1 }
 
         /* Touch sensor */
         var positionTouch = { x : 1, y : 96 }
@@ -739,8 +739,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // var labelScreen, LCDScreenBox;
         // var screenMessage = { messageDisplay1 : "", messageDisplay2 : "", messageDisplay3 : "", messageDisplay4 : "" }
 
-        /* User control queue */
-        var positionControl = { x : 856, y : 1 }
+
 
         /* Button for testing */
         var getKeyspaceButton;
@@ -759,7 +758,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // user's code if uses "up" arrow but didn't hit submit before doing so.
         var tempCode;
 
-        updateBar(92,$("#progressBar"));
+        updateBar(31,$("#progressBar"));
 
         //===================================================
 
@@ -1181,6 +1180,25 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.image('dividerPair','assets/divider_pair.png',99,24);
         } //end preload
       //==============================================================================================================================
+        
+        var interpolateBarId;
+        function estimateBar(p) {
+            updateBar(p,$("#progressBar"));
+            var x = 9;
+            var interpolateBar = function() {
+                p = p + x;
+                x++;
+                if ( p > 100 ) {
+                    clearInterval(interpolateBarId);
+                }
+                updateBar(p,$("#progressBar"));
+            }
+            interpolateBarId = setInterval(interpolateBar, 220);
+        }
+        estimateBar(34);
+    
+      //==============================================================================================================================    
+                
         function create() {          
             updateBar(100, $("#progressBar")); 
             this.game.stage.disableVisibilityChange = true;
@@ -1206,7 +1224,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             frames[ 'IR' ] = new Frame( game, 'IR', positionIR.x, positionIR.y, 275, 60);
             frames[ 'ultrasonic' ] = new Frame( game, 'ultrasonic', positionUltrasonic.x, positionUltrasonic.y, 275, 60);
             //frames[ 'screen' ] = new Frame( game, 'screen', positionScreen.x, positionScreen.y, 275, 99);
-            frames[ 'control'] = new Frame( game, 'control', positionControl.x, positionControl.y, 275, 150 );
+            frames[ 'chat'] = new Frame( game, 'chat', positionChat.x, positionChat.y, 275, 150 );
 
           /* Top Bars */
             topBars[ 'system' ] = game.add.sprite( positionSystem.x+1, positionSystem.y+1,'sensorBar');
@@ -1215,6 +1233,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             topBars[ 'IR' ] = game.add.sprite( positionIR.x+1, positionIR.y+1,'sensorBar');
             topBars[ 'ultrasonic' ] = game.add.sprite( positionUltrasonic.x+1, positionUltrasonic.y+1,'sensorBar');
             //topBars[ 'screen' ] = game.add.sprite( positionScreen.x+1, positionScreen.y+1,'sensorBar');
+            //topBars[ 'chat' ] = game.add.sprite( positionChat.x+1, positionChat.y+1, 'sensorBar' );
 
           /* Labels */
             labelSystem = game.add.text(positionSystem.x+8, positionSystem.y+1+browserFix, "System", textStyles.title);

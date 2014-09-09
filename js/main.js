@@ -11,11 +11,12 @@
 function updateBar (progress, $element) {
     var progressBarWidth = progress * $element.width() / 100;
     $element.find('div').animate({ width: progressBarWidth }, 0).html(progress + "%&nbsp;");
-    if (progress >= 100) {
+    if (progress === 100) {
         $("#progressBar").remove();
     }
 }
-updateBar(2, $("#progressBar"));
+
+updateBar(24, $("#progressBar"));
 
 // global variables related to the game and states
 var client;
@@ -30,56 +31,18 @@ var botStore = { // client id (GUID) : bot name
 }
 var botId = "", botIndex = 0, botName = "";
 var bot = { nameDisplay : "" }
-var botsControlled = [];
-var viewers = {}
 
 // global functions
-var listenToBot,
-    getInitialTouchData,
-    setInitialTouchData,
-    getInitialBatteryLevel,
-    setInitialBatteryLevel,
-    setSensorIDs,
-    setInitialDashboardSettings,
-    displayName,
-    rearrangeDashboard,
-    rearrangeVideoDashboard,
-    newViewer,
-    updateViewers,
-    updateWaiters,
-    listenToBotQueue,
-    indexOfObject,
-    userChangeBot,
-    selectBot,
-    setInitialUserControlDashboard;
-
-
-var userTimerIntervalId;
-var userTimerTimeoutId;
-var startTimer;
-
-/* user control queue stuff */
-var controlDuration = 15;
-var userControl = {
-    labelControl : '',
-    labelViewers : '',
-    viewCount : 0,
-    textViewCount : '',
-    labelWaiters : '',
-    waitCount : 0,
-    textWaitCount : '',
-    labelCurrentUser : '',
-    currentUser : '',
-    textCurrentUser : '',
-    labelYourName : '',
-    yourName : '',
-    textYourName : '',
-    labelTime : '',
-    time : '',
-    textTime : '',
-    prevController : '',
-    newViewer : ''
-}
+var listenToBot;
+var getInitialTouchData;
+var setInitialTouchData;
+var getInitialBatteryLevel;
+var setInitialBatteryLevel;
+var setSensorIDs;
+var setInitialDashboardSettings;
+var displayName;
+var rearrangeDashboard;
+var rearrangeVideoDashboard;
 
 // resize html elements - responsive
 function adjustHtml ( newWidth, newHeight) {
@@ -119,29 +82,18 @@ function appendDropdown( robotClientId ) {
     var newString = "#" + robotClientId;
   /* action once a bot is selected */
     $( newString ).click( function() {
-        if ( userControl.timerRunning === true ) {
-            console.log("You were controlling a bot");
-            userControl.timerRunning === false;
-            userChangeBot( botId ); //previous botId
-        }
-        botId = this.id; //new botId
-        selectBot = function( botId ) {
-            console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
-            botName = botStore[ botId ];
-            botIndex++; // increment the index corresponding to the bot being listened to
-            botsControlled[ botIndex ] = botId;
-            listenToBot( botId, botIndex ); // start listening to the bot that was just selected
-            // dashboard and keyspace initializations:
-            getInitialTouchData( botId );
-            getInitialBatteryLevel( botId );
-            setInitialDashboardSettings( botId );
-            setSensorIDs();
-            // bot name display on dashboard in system box
-            displayName( botName );
-            newViewer( client.clientId(), botId );
-            listenToBotQueue( botId, botIndex );
-        };
-        selectBot( botId );
+        botId = this.id;
+        console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
+        botName = botStore[ botId ];
+        botIndex++; // increment the index corresponding to the bot being listened to
+        listenToBot( botId, botIndex ); // start listening to the bot that was just selected
+        // dashboard and keyspace initializations:
+        getInitialTouchData( botId );
+        getInitialBatteryLevel( botId );
+        setInitialDashboardSettings( botId );
+        setSensorIDs();
+        // bot name display on dashboard in system box
+        displayName( botName );
     });
 }
 // add bots to drop-down menu in navbar (here, it's just for bots that are declared in botStore - our fakebots)
@@ -180,17 +132,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
     });
 
-    updateBar(11, $("#progressBar"));    
+    updateBar(59, $("#progressBar"));    
 
     function beginGame(client, channel) {
         console.log(client.clientId());
-
-        userControl.yourName = client.clientId().slice(0,8);
-
         /* === Dashboard control panel === */
 
-        //var canvasWidth = document.getElementById('gameWorld').offsetWidth; //responsive
-        var canvasWidth = 1132;
+        var canvasWidth = document.getElementById('gameWorld').offsetWidth;
         var canvasHeight = 663;
         //var canvasWidth = 1132, canvasHeight = 530;
         
@@ -208,7 +156,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         game.state.add( 'newState', NewState );
 
-        updateBar(25, $("#progressBar"));
+        updateBar(78, $("#progressBar"));
 
         channel.onMessage( function(evt ) {
             var msg = evt.payload.getBytesAsJSON();
@@ -216,6 +164,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                consoleAppend(msg.message);
             }
         });
+
 
         channel.onSubscribers( function(joined) { // keep track of subscribers to the gigabots channel, and determine which subscribers are robots
             console.log('join ' + joined);
@@ -234,96 +183,17 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     appendDropdown( joined );
                 }
             });
+            //console.dir(botStore);
         }, function(left) {
             console.log("leave " + left);
-            if ( left in botStore ) { // remove bots that have disconnected
+            if ( left in botStore ) {
+                // remove bots that have disconnected
                 var parent = document.getElementById( "botSelectorList" );
                 var child = document.getElementById( left );
                 parent.removeChild( child );
                 delete botStore[ left ];
             }
-            else { // remove viewers/controllers that have disconnected
-                viewers = channel.getKeyspace('viewers').get('viewers');
-                delete viewers[ left ];
-                channel.getKeyspace('viewers').put('viewers', viewers);
-                //remove viewer from lists of bot they've requested to control
-                for ( var k in botStore ) {
-                    var controlObject = channel.getKeyspace(k).get('control');
-                    if ( typeof controlObject !== "undefined" ) {
-                        var index = indexOfObject( controlObject.waiters, "clientId", left ); //check if viewer has already requested control
-                        if ( index === 0 ) { // the user was currently control a bot, so stop their timer and move to the next waiter
-                            console.log("the user was currently control a bot, so stop their timer and move to the next waiter");
-                            controlObject.waiters.splice(index, 1);
-                            clearInterval( userTimerIntervalId );
-                            clearTimeout( userTimerTimeoutId );
-                            channel.getKeyspace(k).put('control', { 'waiters' : controlObject.waiters } );
-                        }
-                        else if ( index > 0 ) { //the user is in the control array but not currently controlling a bot, so just remove them
-                            console.log("removing the user from the bot control waiter array");
-                            controlObject.waiters.splice(index, 1);
-                            channel.getKeyspace(k).put('control', { 'waiters' : controlObject.waiters } );
-                        }
-                    }                   
-                }
-            }
         });
-
-        channel.getKeyspace('viewers').on('viewers', function(val) {
-            updateViewers( client.clientId(), val );
-        });
-
-        listenToBotQueue = function ( robotId, selectionIndex ) {
-            var newBotSelectionControl = channel.getKeyspace(robotId).get('control');
-            if ( typeof newBotSelectionControl === "undefined" || newBotSelectionControl.waiters.length === 0 ) {
-                setInitialUserControlDashboard();
-            }
-
-            channel.getKeyspace(robotId).on('control', function(val) {
-                if ( botsControlled[ botIndex ] === robotId && botIndex === selectionIndex ) { // this is the bot you're currently viewing
-                    console.log(val);
-                    updateWaiters( val );
-                }
-                else { // this is a bot you've previously viewed
-                    if ( val.waiters.length > 0 ) {
-                        if ( val.waiters[0].clientId === client.clientId() ) { //it's your turn to control a bot previously in your waitlist
-                            var removeFromWaitList = function () {
-                                console.log("remove from wait list");
-                                val.waiters.splice(0,1);
-                                channel.getKeyspace(robotId).put('control', { 'waiters' : val.waiters });
-                            };
-                            var promptTimeoutId;
-                            function controlPrompt() {
-                                jConfirm("It's your turn to control " + botStore[robotId] + ", on which you were waiting. Would you like to control " + botStore[robotId] + " now or let the next waiter gain control?", 'Option to Control Another Bot', function(answer) {
-                                    if (answer) { //answered yes
-                                        console.log("yes");
-                                        clearTimeout(promptTimeoutId);
-                                        botIndex = selectionIndex;
-                                        selectBot( robotId );
-                                    }
-                                    else {
-                                        removeFromWaitList();
-                                    }
-                                });
-                                promptTimeoutId = setTimeout(function(){promptTimeOut()}, 6000);
-                            }
-                            function promptTimeOut() {
-                                console.log("timeout, sorry");
-                                $('#popup_cancel').click(); // just click cancel for the user...
-                            }
-                            if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
-                                controlPrompt();
-                            }
-                            else {
-                                removeFromWaitList();
-                            }
-                        }
-                        else {
-                            return 0;
-                        }
-                    }
-                }
-            });
-        };
 
         /* Add new bot */
         $("#addBot").click(function() {
@@ -503,6 +373,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             for ( var i = 1; i <= numGangs; i++ ) {
                 positionGangs[ i ] = { x : 856, y : 161 + ( i - 1 ) * ( gangHeightMin + ( numCheckboxRows ) * 28 + 10 ) } // rightmost column position
             }
+            console.log(heightGangs);
             canvasHeight = 663;
             canvasWidth = 1132;
             adjustHtml( canvasWidth, canvasHeight );
@@ -804,17 +675,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         var topBars = {}
         var dividers = {}
 
-        /* System info, play/stop button and status */
-        var positionSystem = { x : 1, y : 1 }
+        /* Play/stop button and status */
         var labelStatus, statusButton;
         var dashboardStatus = 1; // 1 = 'running/resumed', 0 = 'stopped/paused'
         var status = { statusDisplay : "running..." } // initially running
         var resume = { messageDisplay : 0, resumeOverlay : 0 }
-
-        /* User control queue */
-        var positionControl = { x : 856, y : 1 }
-        var requestControlButton;
-        var inputNameButton;
 
         /* Sensor ID labels */
         var sensorIDLabels = {
@@ -828,7 +693,10 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             // touch : '',
             // color : '',
             // ultrasonic : ''
-        }     
+        }
+
+        /* System info */
+        var positionSystem = { x : 1, y : 1 }
 
         /* Touch sensor */
         var positionTouch = { x : 1, y : 96 }
@@ -871,6 +739,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // var labelScreen, LCDScreenBox;
         // var screenMessage = { messageDisplay1 : "", messageDisplay2 : "", messageDisplay3 : "", messageDisplay4 : "" }
 
+        /* User control queue */
+        var positionControl = { x : 856, y : 1 }
+
         /* Button for testing */
         var getKeyspaceButton;
 
@@ -888,7 +759,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // user's code if uses "up" arrow but didn't hit submit before doing so.
         var tempCode;
 
-        updateBar(31,$("#progressBar"));
+        updateBar(92,$("#progressBar"));
 
         //===================================================
 
@@ -1279,12 +1150,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         displayName = function( robotName ) {
             game.world.remove( bot.nameDisplay );
-            if ( robotName.length > 14 ) var botNameDisplay = robotName.slice(0, 14);
+            if ( robotName.length > 15 ) var botNameDisplay = robotName.slice(0, 15);
             else var botNameDisplay = robotName;
             bot.nameDisplay = game.add.text(positionSystem.x+145-botNameDisplay.length*60/16, positionSystem.y+61+browserFix, botNameDisplay, textStyles.status);
-            // update the title for the User Control box too
-            game.world.remove(userControl.labelControl);
-            userControl.labelControl = game.add.text( positionControl.x+8, positionControl.y+1+browserFix, "User Control for " + robotName.slice(0,13), textStyles.title );
         }
       //==============================================================================================================================
         function preload() {
@@ -1295,8 +1163,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.spritesheet('plusButton','assets/buttons/plus_button_spritesheet.png', 44, 44);
             game.load.spritesheet('touchIndicator','assets/touch_sensor_spritesheet.png', 21, 21);
             game.load.spritesheet('statusButton','assets/buttons/status_button_spritesheet.png', 76, 32);
-            game.load.spritesheet('requestControlButton','assets/buttons/request_control_button_spritesheet.png', 141, 39);
-            game.load.spritesheet('inputNameButton','assets/buttons/input_name_button_spritesheet.png', 71, 61);
             game.load.spritesheet('dialFace','assets/dial_face_spritesheet.png', 52, 52);
             //game.load.spritesheet('screenInputButton', 'assets/buttons/lcd_screen_input_button_spritesheet.png', 56, 32);
             game.load.spritesheet('colorOutput', 'assets/color_output_spritesheet.png', 59, 20);
@@ -1313,29 +1179,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.image('dividerLine','assets/divider_line.png',144,1);
             game.load.image('dividerLine2','assets/divider_line_2.png',261,22);
             game.load.image('dividerPair','assets/divider_pair.png',99,24);
-            
         } //end preload
       //==============================================================================================================================
-
-        var interpolateBarId;
-        function estimateBar(p) {
-            updateBar(p,$("#progressBar"));
-            var x = 9;
-            var interpolateBar = function() {
-                p = p + x;
-                x++;
-                if ( p > 100 ) {
-                    clearInterval(interpolateBarId);
-                }
-                updateBar(p,$("#progressBar"));
-            }
-            interpolateBarId = setInterval(interpolateBar, 260);
-        }
-        estimateBar(34);
-    
-      //==============================================================================================================================    
-        function create() {  
-
+        function create() {          
             updateBar(100, $("#progressBar")); 
             this.game.stage.disableVisibilityChange = true;
             game.input.keyboard.disabled = false;
@@ -1369,7 +1215,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             topBars[ 'IR' ] = game.add.sprite( positionIR.x+1, positionIR.y+1,'sensorBar');
             topBars[ 'ultrasonic' ] = game.add.sprite( positionUltrasonic.x+1, positionUltrasonic.y+1,'sensorBar');
             //topBars[ 'screen' ] = game.add.sprite( positionScreen.x+1, positionScreen.y+1,'sensorBar');
-            topBars[ 'control' ] = game.add.sprite( positionControl.x+1, positionControl.y+1, 'sensorBar' );
 
           /* Labels */
             labelSystem = game.add.text(positionSystem.x+8, positionSystem.y+1+browserFix, "System", textStyles.title);
@@ -1377,26 +1222,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             status.statusDisplay =  game.add.text(positionSystem.x+12, positionSystem.y+61+browserFix, "running...", textStyles.status);
 
             var botLabelivider = game.add.sprite(positionSystem.x+95,positionSystem.y+33,'dividerPair');
-            var botLabel = game.add.text(positionSystem.x+104, positionSystem.y+36+browserFix,"Selected bot:", { font: "13px Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif", fill: "#bcbcbc" } );
+            var botLabel = game.add.text(positionSystem.x+98, positionSystem.y+36+browserFix,"Controlling bot:", { font: "13px Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif", fill: "#bcbcbc" } );
             if ( botId === '' ) bot.nameDisplay = game.add.text(positionSystem.x+91, positionSystem.y+62+browserFix, "No robot selected ", textStyles.selectBot);
             else { 
                 displayName( botName );
             }
 
             battery.levelDisplay = game.add.text( positionSystem.x+216, positionSystem.y+61, Math.round(battery.level * 100) + " %", textStyles.status );
-
-            userControl.labelControl = game.add.text( positionControl.x+8, positionControl.y+1+browserFix, "User Control", textStyles.title );
-            userControl.labelViewers = game.add.text( positionControl.x+12, positionControl.y+32+browserFix, "Viewers:", textStyles.label );
-            userControl.labelWaiters = game.add.text( positionControl.x+12, positionControl.y+55+browserFix, "Waiters:", textStyles.label );
-            userControl.labelCurrentUser = game.add.text( positionControl.x+12, positionControl.y+78+browserFix, "In Control:", textStyles.label );
-            userControl.labelTime = game.add.text( positionControl.x+12, positionControl.y+101+browserFix, "Seconds Left:", textStyles.label );
-            userControl.labelYourName = game.add.text( positionControl.x+12, positionControl.y+124+browserFix, "Your Name:", textStyles.label );
-
-            userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
-            userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, userControl.waitCount, textStyles.data );
-            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, userControl.currentUser, textStyles.status );
-            userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, userControl.time, textStyles.data );
-            userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName, textStyles.status );
 
             labelTouch = game.add.text(positionTouch.x+8, positionTouch.y+1+browserFix, "Touch Sensor", textStyles.title);
             labelTouched = game.add.text(positionTouch.x+12, positionTouch.y+32+browserFix, "Touched", textStyles.label);
@@ -1423,13 +1255,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             statusButton = game.add.button(positionSystem.x+10, positionSystem.y+33, 'statusButton', actionStopOnClick);
             statusButton.setFrames(1,0,0,0);
             statusButton.input.useHandCursor = true;
-          /* User Control buttons */
-            userControl.requestControlButton = game.add.button(positionControl.x+125, positionSystem.y+33, 'requestControlButton', actionRequestControl);
-            userControl.requestControlButton.setFrames(1,0,2,0);
-            userControl.requestControlButton.input.useHandCursor = true;
-            userControl.inputNameButton = game.add.button(positionControl.x+195, positionSystem.y+80, 'inputNameButton', actionInputName);
-            userControl.inputNameButton.setFrames(1,0,2,0);
-            userControl.inputNameButton.input.useHandCursor = true;
           /* Touch Sensor */
             touchIndicator = game.add.sprite(positionTouch.x+68, positionTouch.y+30, 'touchIndicator');
             touchIndicator.animations.add('up', [0], 1);
@@ -2008,12 +1833,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }               
             data.speed = speed;
             //console.log( "sending " + JSON.stringify(data));
-            // only let the user currently in control actually send commands to the bot. Maybe for all adjustments too?
-            bot.control = channel.getKeyspace( botId ).get('control');
-            if ( bot.control.waiters[0].clientId === client.clientId() ) {
-                channel.publish( data );
-            }
-            //channel.publish( data );
+            channel.publish( data );
             var dashKey = motor + 'Dash';
             channel.getKeyspace(botId).put( dashKey, { 'speed': speed, 'direction': direction, 'directionSwapped': swapped } );
         }
@@ -2023,250 +1843,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             data.type = "motorStop";
             data.port = motor;
             //console.log( "sending " + JSON.stringify(data));
-            bot.control = channgel.getKeyspace( botId ).get('control');
-            if ( bot.control.waiters[0].clientId === client.clientId() ) {
-                channel.publish( data );
-            }
-            //channel.publish( data );
+            channel.publish( data );
             var dashKey = motor + 'Dash';
             channel.getKeyspace(botId).put( dashKey, { 'speed': motors[ motor ].speed, 'direction': "stopped", 'directionSwapped': motors[ motor ].directionSwapped } );
         }
       //=============================================================================
-      /* User control & queueing stuff */
-        function actionRequestControl () {
-            if ( botId !== '' ) {
-                userControl.newViewer = false;
-                bot.control = channel.getKeyspace( botId ).get('control');
-                if ( typeof bot.control === 'undefined' ) {
-                    bot.control = {};
-                    bot.control.waiters = [];
-                }
-                var index = indexOfObject( bot.control.waiters, 'clientId', client.clientId() ); //check if user has already requested control
-                if ( index === -1 ) { //the user isn't in the bot.control array, so let them request a turn
-                    var newWaiter = {
-                        'clientId' : client.clientId(),
-                        'name' : userControl.yourName
-                    }
-                    bot.control.waiters.push( newWaiter ); 
-                } 
-                else {
-                    alert("You've already requested control and are in line. Please try again after you've had your turn.");
-                }
-                channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters } );
-            }
-            else {
-                alert("Please first select a Gigabot from the dropdown menu in the above navigation bar.");
-            }
-            listenToBotQueue( botId, botIndex ); // start this client listening on the channel for when a change is made to the selected bot's control keyspace
-        }
-        // Array.prototype.indexOfObject = function indexOfObject (property, value) { // for finding the index of an object with specified value or a property within an array
-        //     for ( var i = 0, len = this.length; i < len; i++) {
-        //         if (this[i][property] === value) return i;
-        //     }
-        //     return -1;
-        // }
-        indexOfObject = function( array, property, value ) { // for finding the index of an object with specified value or a property within an array
-            for (var i = 0, len = array.length; i < len; i++) {
-                if (array[i][property] === value) return i;  
-            }   
-            return -1; 
-        };
-
-        updateWaiters = function( val ) {
-
-            bot.control = channel.getKeyspace(botId).get('control');
-            if ( val.waiters.length > 0 ) { // make sure there's even somebody in the array
-                if ( val.waiters[0].clientId !== userControl.prevController ) { //|| val.waiters.length === 1 ) {
-                    console.log("new controller: " + val.waiters[0].clientId );
-                    userControl.prevController = val.waiters[0].clientId;
-                    updateCurrentUserText( val.waiters[0].name );
-
-                    startTimer = function( time, controller ) {
-                        var updateTime = function() {
-                            time--;
-                            if ( val.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
-                                userControl.timerRunning = true;
-                                channel.getKeyspace( botId ).put( 'timer', { 'time' : time });
-                            }
-                            updateTimeText( time );
-                            console.log("time remaining for " + controller.name + ": " + time + " seconds");
-                        };
-                        userTimerIntervalId = setInterval( updateTime, 1000 );
-                        userTimerTimeoutId = setTimeout( function(){
-                            userTimerTimeout()
-                        }, (time + 1) * 1000 );
-                    }
-                    function userTimerTimeout() {
-                        clearInterval( userTimerIntervalId );
-
-                        if ( bot.control.waiters.length > 0 ) {
-                            if ( bot.control.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
-                                channel.getKeyspace( botId ).put( 'timer', { 'time' : 0 });
-                                userControl.timerRunning = false;
-                            }
-                        }
-
-                        if ( bot.control.waiters.length === 1 ) { //you're the only user, so you can continue controlling
-                            console.log(bot.control.waiters[0].name + " is the only user, so they can continue controlling...");
-                            userControl.prevController = ''; // little hack for the special case to allow the current controlling user to continue controlling
-                            updateWaiters( bot.control );
-                        }
-                        else {
-                            console.log( "others are waiting. Switch to the next user");
-                            bot.control.waiters.splice(0,1); // remove the user in first place
-                            channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
-                        }
-                        console.log("time's up");
-
-                    }
-                    if ( !userControl.newViewer ) { // this prevents a viewer just tuning from starting a new timer at the beginning while in the middle of the controller's timer countdown
-                        startTimer( controlDuration, bot.control.waiters[0] );
-                    }   
-                }
-                else { // don't restart the timer, bc it's already going
-                    console.log(val.waiters[0].clientId + " is still in control");
-                }
-            }
-            if ( userControl.newViewer ) {
-                userControl.newViewer = false;
-                if ( val.waiters.length > 0 ) {
-                    userControl.prevController = val.waiters[0].clientId;
-                    updateCurrentUserText( val.waiters[0].name );
-
-                    var timer = channel.getKeyspace(botId).get('timer');
-                    if ( typeof timer !== "undefined" ) {
-                        if ( typeof timer.time !== "undefined" ) {
-                            console.log("start timer in the middle, at " + timer.time + " sec for " + val.waiters[0].name );
-                            startTimer( timer.time - 1, val.waiters[0] );
-                        }
-                        else {
-                            console.log("time undefined");
-                        }
-                    }
-                    else {
-                        console.log("timer object undefined");
-                    }
-                }
-            }
-
-            userControl.waitCount = val.waiters.length - 1; // waiters array
-            updateWaitCountText( userControl.waitCount );
-
-        }; //end updateWaiters
-
-        // var yourUserTimerIntervalId; // setInterval function variable name
-        // function updateYourUser() {
-        //     userControl.time = controlDuration; // preset time duration
-        //     updateTimeText( userControl.time );
-        //     yourUserTimerIntervalId = setInterval( function() { yourUserTimer() }, 1000 );
-        // }
-        // function yourUserTimer  () {
-        //     if ( userControl.time > 0 ) {
-        //         userControl.time--;
-        //         bot.control = channel.getKeyspace( botId ).get( 'control' );
-        //         bot.control.waiters[0].time = userControl.time;
-        //         channel.getKeyspace( botId ).put( 'control', { 'waiters' : bot.control.waiters });
-        //     }
-        //     else {
-        //         console.log("ready for next user. If there aren't any, you can continue controlling");
-        //         clearInterval( yourUserTimerIntervalId );
-        //         userControl.timerRunning = false;
-        //         bot.control = channel.getKeyspace( botId ).get( 'control' );
-        //         updateWaiters( bot.control );
-        //     }
-        // }
-
-        userChangeBot = function ( previousBotId ) {
-            console.log("previous bot id: " + previousBotId);
-            var controlObject = channel.getKeyspace( previousBotId ).get('control');
-            if ( typeof controlObject !== "undefined" ) {
-                var index = indexOfObject( controlObject.waiters, "clientId", client.clientId() ); //check if viewer has already requested control
-                if ( index === 0 ) { //the user was currently controlling a bot, so move to the next user
-                    console.log("the user was currently controlling a bot, so move to the next user");
-                    controlObject.waiters.splice(index, 1);
-                    clearInterval( userTimerIntervalId );
-                    clearTimeout( userTimerTimeoutId );
-                    channel.getKeyspace( previousBotId ).put('control', { 'waiters' : controlObject.waiters } );
-                }
-                else if ( index > 0 ) {
-                    console.log("you are still in the wait list for " + previousBotId);
-                }
-            }
-        };
-
-        // new viewer and update viewers
-        newViewer = function ( clientId, selectedBot ) {
-            viewers = channel.getKeyspace('viewers').get('viewers');
-            if ( typeof viewers !== "undefined" ) {
-                viewers[ clientId ] = selectedBot; // connect the user to the bot the user is controlling
-            }
-            else {
-                viewers = {};
-                viewers[ clientId ] = selectedBot;
-            }
-            channel.getKeyspace('viewers').put('viewers', viewers);
-
-            // check if waiters, controller, or timer need to be updated for this new viewer
-            bot.control = channel.getKeyspace(selectedBot).get('control');
-            if ( typeof bot.control !== "undefined" ) {
-                if ( typeof bot.control.waiters !== "undefined" ) {
-                    if ( typeof bot.control.waiters[0] !== "undefined" ) {
-                        updateCurrentUserText( bot.control.waiters[0].name );
-                    }
-                    else {
-                        updateCurrentUserText( 'nobody' );
-                        console.log("nobody in control");
-                    }
-                    userControl.newViewer = true;
-                    updateWaiters( bot.control );
-                    userControl.newViewer = false;
-                }
-                else {
-                    console.log("waiters array undefined")
-                }
-            }
-        };
-        updateViewers = function ( clientId, dataViewers ) {
-            userControl.viewCount = 0;
-            for ( var k in dataViewers ) {
-                if ( dataViewers[ k ] === dataViewers[ clientId ] && dataViewers[ clientId ] !== ''  ) {
-                    userControl.viewCount++;
-                }
-            }
-            game.world.remove(userControl.textViewCount);
-            userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
-        };
-        // update text only
-        function updateTimeText( time ) {
-            console.log( time );
-            if ( time >= 0 ) {
-                game.world.remove( userControl.textTime );
-                userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, time + '', textStyles.data );
-            }
-        }
-        function updateCurrentUserText( name ) {
-            game.world.remove(userControl.textCurrentUser);
-            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, name.slice(0,8), textStyles.status );
-        }
-        function updateWaitCountText( waitCount ) {
-            game.world.remove(userControl.textWaitCount);
-            if ( waitCount < 0 ) waitCount = 0;
-            userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, waitCount + '', textStyles.data );
-        }
-        // let user update his/her name
-        function actionInputName () {
-            if ( userControl.timerRunning === false ) {
-                userControl.yourName = prompt("What would you like your new name to be?");
-                game.world.remove(userControl.textYourName);
-                userControl.textYourName = game.add.text( positionControl.x+85, positionControl.y+123+browserFix, userControl.yourName.slice(0,13), textStyles.status );
-            }
-        }
-        setInitialUserControlDashboard = function() {
-            console.log("this bot is not being used right now, so initializing user control data");
-            updateWaitCountText(0);
-            updateTimeText('');
-            updateCurrentUserText('nobody');
-        };
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {
                 statusButton.setFrames(2,2,2,2);
@@ -2342,8 +1923,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             console.log(dt);
             var db = channel.getKeyspace(botId).get('batteryDash');
             console.log(db);
-            var dControl = channel.getKeyspace(botId).get('control');
-            console.log(dControl);
         }
 
     //==============================================================================================================================
@@ -2696,7 +2275,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         function enableKeyboard() {
             game.input.keyboard.disabled = false;
         }
-
 
         function publish(botCode) {
             channel.publish({ "type": "js", "js": botCode, "recipient": botId });

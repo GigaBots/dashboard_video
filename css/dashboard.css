@@ -1,9 +1,7 @@
 /* Progress bar
 ========================================= */
 #progressBar {
-	margin: 10px auto -34px auto;
-	position: relative;
-	display: block;
+	margin: 15% auto;
 	width: 600px;
 	height: 24px;
 	background-color: #292929;
@@ -11,7 +9,6 @@
 	border-radius: 11px;
 	padding: 2px;
 	border: 1px solid #111;
-	/*float: center;*/
 }
 #progressBar div {
 	height: 100%;
@@ -39,8 +36,6 @@
 	/*resize:both;*/
 	overflow: auto;
 	clear: both;
-	width: 1132px;
-	height: 663px;
 }
 
 /* Video canvas
@@ -213,11 +208,5 @@ html::-WebKit-scrollbar-thumb {
 	.content {
 		padding-bottom: 85px;
 		height: 100%;
-	}
-}
-
-@media (max-width: 1149px) {
-	#videoCanvas {
-		margin-left: 285px; /* prevent the video canvas from moving to to the left, since it's otherwise centered */
 	}
 }

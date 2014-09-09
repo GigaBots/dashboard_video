@@ -10,13 +10,10 @@
 	<link href="css/dashboard.css" rel="stylesheet" media="screen">
 	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,600,800,700,300' rel='stylesheet' type='text/css'>
 	<script type="text/javascript" src="js/jquery.min.js"></script>
-	<script type="text/javascript" src="js/jquery.ui.draggable.js"></script>
-	<script type="text/javascript" src="js/jquery.alerts.js"></script>
 	<script type="text/javascript" src="js/bootstrap.min.js"></script>
 	<link rel="stylesheet" href="css/bootstrap.css" media="screen">
 	<link rel="stylesheet" href="css/bootstrap.min.css" media="screen">
     <link rel="stylesheet" href="css/bootstrap-theme.min.css" media="screen">
-    <link rel="stylesheet" href="css/jquery.alerts.css" media="screen">
 </head>
 
 <body>
@@ -67,7 +64,10 @@
 		</div><!-- /.container-fluid -->
 	</nav>
 
-
+<!-- progress bar -->
+	<div  id="progressBar">
+		<div></div>
+	</div>
 <!-- page content -->
 	<div class="content" -webkit-overflow-scrolling: touch>
 	<!-- control panel in html5 canvas -->
@@ -113,7 +113,7 @@
         var ctx = videoCanvas.getContext('2d');
         ctx.font = '13px Arial';
         ctx.fillStyle = '#DDD';
-        ctx.fillText('Loading Video Stream...', videoCanvas.width/2-69, videoCanvas.height/2-6);
+        ctx.fillText('Loading...', videoCanvas.width/2-30, videoCanvas.height/2-6);
 
         // Setup the WebSocket connection and start the player
         // var client = new WebSocket('ws://192.168.1.108:8084'); // on pi's local network
@@ -121,9 +121,7 @@
         var player = new jsmpeg(wsClient, {canvas: videoCanvas});
 
     </script>
-	<div id="progressBar">
-		<div></div>
-	</div>
+
 	<!-- console-based text editor / repl -->
 	 	<div id="textEditor">
 			<p id="label">Gigabots Console<br></p>
@@ -136,8 +134,7 @@
 			<button class="editorButtons" id="repoButton">&nbsp;&nbsp;Repositories&nbsp;&nbsp;</button>
 		</a>
 	</div>
-	<!-- progress bar -->
-	<!-- footer -->
+<!-- footer -->
 	<footer class="main-footer hidden-sm hidden-xs">
 		<div class="container-fluid"
 			<div class="row">

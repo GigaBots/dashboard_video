@@ -84,7 +84,7 @@ function appendDropdown( robotClientId ) {
   /* action once a bot is selected */
     $( newString ).click( function() {
         botId = this.id;
-        console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
+        // console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
         botName = botStore[ botId ];
         botIndex++; // increment the index corresponding to the bot being listened to
         listenToBot( botId, botIndex ); // start listening to the bot that was just selected
@@ -136,7 +136,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
     updateBar(11, $("#progressBar"));    
 
     function beginGame(client, channel) {
-        console.log(client.clientId());
+        // console.log(client.clientId());
         /* === Dashboard control panel === */
 
         //var canvasWidth = document.getElementById('gameWorld').offsetWidth;
@@ -168,7 +168,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
 
         channel.onSubscribers( function(joined) { // keep track of subscribers to the gigabots channel, and determine which subscribers are robots
-            console.log('join ' + joined);
+            // console.log('join ' + joined);
             var roboInfo = channel.getKeyspace(joined).get('robot');
             if( roboInfo ) {
                 if ( !(joined in botStore) ) {
@@ -189,7 +189,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             });
             //console.dir(botStore);
         }, function(left) {
-            console.log("leave " + left);
+            // console.log("leave " + left);
             if ( left in botStore ) {
                 // remove bots that have disconnected
                 var parent = document.getElementById( "botSelectorList" );
@@ -223,7 +223,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
 
         channel.getKeyspace('chat').on('message', function(val) {
-            console.log(val);
             writeMessage(val.clientId,val.message);
         });
 
@@ -864,7 +863,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     setBatteryLevel(val.ev3.power);
                 }
             }, function (key) {
-                console.log("bot " + robotClientId + " left");
+                console.log("bot " + robotClientId + " disconnected");
                 //console.log("Delete:" + key);
             });
 
@@ -1067,7 +1066,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 } 
                 touch.timeDisplay = game.add.text(positionTouch.x+132, positionTouch.y+54+browserFix, timeDisplay, textStyles.data);                
             }
-            console.log("initial touch count set to " + touch.count + " and total time pressed to " + touch.time);
+            // console.log("initial touch count set to " + touch.count + " and total time pressed to " + touch.time);
         }
         getInitialBatteryLevel = function( robotClientId ) {
             var batteryLevelData = channel.getKeyspace(botId).get('batteryDash'); // get the current battery level, before occassional updates
@@ -1169,7 +1168,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         setInitialDashboardSettings = function( robotClientId ) { // if the bot has just been connected and has no dashboard settings in its keyspace
             var dashMotorA = channel.getKeyspace(robotClientId).get('aDash');
             if ( typeof dashMotorA === 'undefined' ) { // if this is undefined, that will mean that the bot is just being accessed for the first time, so it doesn't have any dashboard settings in each keyspace.
-                console.log("initializing keyspace and dashboard settings for the newly connected bot...");
+                // console.log("initializing keyspace and dashboard settings for the newly connected bot...");
                 channel.getKeyspace(botId).put('touchDash', { 'touchCount' : 0, 'touchTime' : 0 });                
                 channel.getKeyspace(botId).put('batteryDash', { 'batteryLevel' : 0 });
                 for ( var m in motors ) {
@@ -2137,24 +2136,24 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     client.subscribe("newBot", function( err, c) {
                         if(!err) {
                             game.state.restart('default');
-                            console.log(client.clientId());
-                             console.dir(c);
-                            console.log(botId);
+                            // console.log(client.clientId());
+                             // console.dir(c);
+                            // console.log(botId);
                             botName = botStore[ botId ];
                             botIndex++;
                             listenToBot( botId, botIndex ); // start listening to the bot that was previously being used
                             getInitialTouchData( botId );
                             getInitialBatteryLevel( botId );
                             setInitialDashboardSettings( botId );
-                            console.log("Reconnected to bot " + botId + " with name " + botName);
+                            // console.log("Reconnected to bot " + botId + " with name " + botName);
                         }
                         else {
-                            console.log("Resubscribe failure. " + err);
+                            // console.log("Resubscribe failure. " + err);
                         }
                     })
                 }
                 else {
-                    console.log("RECONNECT FAILURE.");
+                    // console.log("RECONNECT FAILURE.");
                 }
             });
         };
@@ -2353,7 +2352,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             var evalCode = document.getElementById("currentCode").innerText;
 
 
-            console.log(evalCode);
+            // console.log(evalCode);
 
             //There fix up special funky characters.
 

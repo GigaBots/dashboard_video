@@ -202,10 +202,15 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
         });
 
+        /* chat stuff */
         $('#sendie').keyup(function (e) {
             if (e.keyCode == 13) {
                 var text = $(this).val();
-                channel.publish({msg: text});
+                //channel.publish({msg: text});
+                channel.getKeyspace('chat').put('message', { 
+                    'clientId' : client.clientId(), 
+                    'message' : text 
+                });
                 $(this).val("");
             }
         });
@@ -216,6 +221,21 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             $('#chat-area').append($("<p>" + img + text + "<br style='clear: both;' />  </p>"));
             document.getElementById('chat-area').scrollTop = document.getElementById('chat-area').scrollHeight;
         }
+
+        channel.getKeyspace('chat').on('message', function(val) {
+            console.log(val);
+            writeMessage(val.clientId,val.message);
+        });
+
+        // document.getElementById("sendMessage").onclick = function() {
+        //     var node = document.getElementById("sendie");
+        //     var text = $('#sendie').val();
+        //     console.log(text);
+        //     channel.getKeyspace('chat').put('message', { 
+        //         'clientId' : client.clientId(), 
+        //         'message' : text 
+        //     });
+        // };
 
         /* Add new bot */
         $("#addBot").click(function() {
@@ -2305,13 +2325,16 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         // When the latest click is within the dashboard, enable the hotkeys
         // When the latest click is within the textEditor, disable the hotkeys s.t. user can use all letters when typing
-        $("#textEditor").click( function () { // hovering over textEditor
+        $("#textEditor").click( function () { // over textEditor
+            disableKeyboard();
+        });
+        $("#sendMessageArea").click( function () { // over chat message input
             disableKeyboard();
         });
         function disableKeyboard() {
             game.input.keyboard.disabled = true;
         }
-        $("#gameWorld").click( function () { // hovering over textEditor
+        $("#gameWorld").click( function () { // over game world
             enableKeyboard();
         });
         function enableKeyboard() {

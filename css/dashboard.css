@@ -98,7 +98,7 @@
 	1px solid #6f6f6f; 
 }
 
-#send-message-area p { 
+#sendMessageArea p { 
 	width: 277px;
 	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
 	font-size: 16px;
@@ -124,8 +124,12 @@
 	padding: 10px; 
 	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
 	font-size: 12px; 
-	/*resize: none;*/
+	resize: none;
 }
+/*#sendMessage {
+	font-size: 12px;
+	margin: 263px 1px 0px 1068px;
+}*/
 
 /* Text editor
 ========================================= */
@@ -143,8 +147,9 @@
 	border-style: solid;
 	border-width: 2px;
 	border-color: #6f6f6f;
+	/*margin: -344px 1px 0 1px;*/ /*with send message button*/
 	margin: -55px 1px 0 1px; /* gap for relative positioning below video canvas, with motor boxes in between */
-	/*margin: 8px auto -0 auto;*/
+	/*margin: 8px auto -0 auto;*/ /* original (without video) */
 	font-size: 12px;
 	position: relative;
 	padding-bottom: 20px;
@@ -199,15 +204,15 @@
 }
 #runButton {
 	font-size: 12px;
-    left: -moz-calc(50% - 566px);
-    left: -webkit-calc(50% - 566px);
-    left: calc(50% - 566px);*/
+    left: -moz-calc(50% - 565px);
+    left: -webkit-calc(50% - 565px);
+    left: calc(50% - 565px);
 }
 #repoButton {
 	font-size: 12px;
-	left: -moz-calc(50% - 566px);
-	left: -webkit-calc(50% - 566px);
-	left: calc(50% - 566px);*/
+	left: -moz-calc(50% - 565px);
+	left: -webkit-calc(50% - 565px);
+	left: calc(50% - 565px);
 }
 
 

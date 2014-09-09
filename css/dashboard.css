@@ -107,7 +107,7 @@
 	padding: 1px 8px;
 	margin: 520px 1px 0px 855px;
 	border-width: 2px;
-	border-color: #6f6f6f; 
+	border-color: #6f6f6f;
 	/* gradient */
 	background-image: -webkit-linear-gradient(top, #777879 0%, #626263 100%);
 	background-image: linear-gradient(to bottom, #777879 0%, #626263 100%);
@@ -119,11 +119,13 @@
 	margin: 0px 1px -268px 855px;
 	border-width: 2px;
 	border-color: #6f6f6f; 
+	background-color: rgba(221, 221, 221, 0.84); 
 	width: 277px; 
 	height: 294px;
 	padding: 10px; 
+	color: #202020;
 	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
-	font-size: 12px; 
+	font-size: 14px; 
 	resize: none;
 }
 /*#sendMessage {

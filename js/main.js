@@ -2137,7 +2137,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     if ( typeof timer !== "undefined" ) {
                         if ( typeof timer.time !== "undefined" ) {
                             console.log("start timer in the middle, at " + timer.time + " sec for " + val.waiters[0].name );
-                            startTimer( timer.time, val.waiters[0] );
+                            startTimer( timer.time - 1, val.waiters[0] );
                         }
                         else {
                             console.log("time undefined");
@@ -2193,21 +2193,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 }
             }
         };
-        // update text only
-        function updateTimeText( time ) {
-            console.log( time );
-            game.world.remove( userControl.textTime );
-            userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, time + '', textStyles.data );
-        }
-        function updateCurrentUserText( name ) {
-            game.world.remove(userControl.textCurrentUser);
-            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, name.slice(0,8), textStyles.status );
-        }
-        function updateWaitCountText( waitCount ) {
-            game.world.remove(userControl.textWaitCount);
-            if ( waitCount < 0 ) waitCount = 0;
-            userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, waitCount + '', textStyles.data );
-        }
+
         // new viewer and update viewers
         newViewer = function ( clientId, selectedBot ) {
             viewers = channel.getKeyspace('viewers').get('viewers');
@@ -2250,6 +2236,23 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove(userControl.textViewCount);
             userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
         };
+        // update text only
+        function updateTimeText( time ) {
+            console.log( time );
+            if ( time >= 0 ) {
+                game.world.remove( userControl.textTime );
+                userControl.textTime = game.add.text( positionControl.x+93, positionControl.y+98+browserFix, time + '', textStyles.data );
+            }
+        }
+        function updateCurrentUserText( name ) {
+            game.world.remove(userControl.textCurrentUser);
+            userControl.textCurrentUser = game.add.text( positionControl.x+79, positionControl.y+77+browserFix, name.slice(0,8), textStyles.status );
+        }
+        function updateWaitCountText( waitCount ) {
+            game.world.remove(userControl.textWaitCount);
+            if ( waitCount < 0 ) waitCount = 0;
+            userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, waitCount + '', textStyles.data );
+        }
         // let user update his/her name
         function actionInputName () {
             if ( userControl.timerRunning === false ) {

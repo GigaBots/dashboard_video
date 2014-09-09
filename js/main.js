@@ -47,7 +47,7 @@ var listenToBot,
     newViewer,
     updateViewers,
     updateWaiters,
-    botQueueChannelData,
+    listenToBotQueue,
     indexOfObject,
     userChangeBot,
     selectBot,
@@ -120,9 +120,11 @@ function appendDropdown( robotClientId ) {
   /* action once a bot is selected */
     $( newString ).click( function() {
         if ( userControl.timerRunning === true ) {
-            userChangeBot( botId );
+            console.log("You were controlling a bot");
+            userControl.timerRunning === false;
+            userChangeBot( botId ); //previous botId
         }
-        botId = this.id;
+        botId = this.id; //new botId
         selectBot = function( botId ) {
             console.log("selected bot with clientId " + botId + " and name " + botStore[ botId ]);
             botName = botStore[ botId ];
@@ -137,8 +139,8 @@ function appendDropdown( robotClientId ) {
             // bot name display on dashboard in system box
             displayName( botName );
             newViewer( client.clientId(), botId );
-            botQueueChannelData( botId, botIndex );
-        }
+            listenToBotQueue( botId, botIndex );
+        };
         selectBot( botId );
     });
 }
@@ -206,7 +208,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         game.state.add( 'newState', NewState );
 
-        updateBar(28, $("#progressBar"));
+        updateBar(25, $("#progressBar"));
 
         channel.onMessage( function(evt ) {
             var msg = evt.payload.getBytesAsJSON();
@@ -270,9 +272,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             updateViewers( client.clientId(), val );
         });
 
-        botQueueChannelData = function ( robotId, selectionIndex ) {
-            var newBotSelectionData = channel.getKeyspace(robotId).get('control');
-            if ( typeof newBotSelectionData === "undefined" || newBotSelectionData.waiters.length === 0 ) {
+        listenToBotQueue = function ( robotId, selectionIndex ) {
+            var newBotSelectionControl = channel.getKeyspace(robotId).get('control');
+            if ( typeof newBotSelectionControl === "undefined" || newBotSelectionControl.waiters.length === 0 ) {
                 setInitialUserControlDashboard();
             }
 
@@ -282,44 +284,46 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     updateWaiters( val );
                 }
                 else { // this is a bot you've previously viewed
-                    if ( val.waiters[0].clientId === client.clientId() ) { //it's your turn to control a bot previously in your waitlist
-                        var removeFromWaitList = function () {
-                            console.log("remove from wait list");
-                            val.waiters.splice(0,1);
-                            channel.getKeyspace(robotId).put('control', { 'waiters' : val.waiters });
-                        };
-                        var promptTimeoutId;
-                        function controlPrompt() {
-                            jConfirm("It's your turn to control " + botStore[robotId] + ", on which you were waiting. Would you like to control " + botStore[robotId] + " now or let the next waiter gain control?", 'Option to Control Another Bot', function(answer) {
-                                if (answer) { //answered yes
-                                    console.log("yes");
-                                    clearTimeout(promptTimeoutId);
-                                    botIndex = selectionIndex;
-                                    selectBot( robotId );
-                                }
-                                else {
-                                    removeFromWaitList();
-                                }
-                            });
-                            promptTimeoutId = setTimeout(function(){promptTimeOut()}, 6000);
-                        }
-                        function promptTimeOut() {
-                            console.log("timeout, sorry");
-                            $('#popup_cancel').click(); // just click cancel for the user...
-                        }
-                        if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
-                            controlPrompt();
+                    if ( val.waiters.length > 0 ) {
+                        if ( val.waiters[0].clientId === client.clientId() ) { //it's your turn to control a bot previously in your waitlist
+                            var removeFromWaitList = function () {
+                                console.log("remove from wait list");
+                                val.waiters.splice(0,1);
+                                channel.getKeyspace(robotId).put('control', { 'waiters' : val.waiters });
+                            };
+                            var promptTimeoutId;
+                            function controlPrompt() {
+                                jConfirm("It's your turn to control " + botStore[robotId] + ", on which you were waiting. Would you like to control " + botStore[robotId] + " now or let the next waiter gain control?", 'Option to Control Another Bot', function(answer) {
+                                    if (answer) { //answered yes
+                                        console.log("yes");
+                                        clearTimeout(promptTimeoutId);
+                                        botIndex = selectionIndex;
+                                        selectBot( robotId );
+                                    }
+                                    else {
+                                        removeFromWaitList();
+                                    }
+                                });
+                                promptTimeoutId = setTimeout(function(){promptTimeOut()}, 6000);
+                            }
+                            function promptTimeOut() {
+                                console.log("timeout, sorry");
+                                $('#popup_cancel').click(); // just click cancel for the user...
+                            }
+                            if ( !userControl.timerRunning ) { //you aren't currently controlling a bot
+                                controlPrompt();
+                            }
+                            else {
+                                removeFromWaitList();
+                            }
                         }
                         else {
-                            removeFromWaitList();
+                            return 0;
                         }
-                    }
-                    else {
-                        return 0;
                     }
                 }
             });
-        }
+        };
 
         /* Add new bot */
         $("#addBot").click(function() {
@@ -1320,7 +1324,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             var interpolateBar = function() {
                 p = p + x;
                 x++;
-                console.log("progress: " + p);
                 if ( p > 100 ) {
                     clearInterval(interpolateBarId);
                 }
@@ -1330,8 +1333,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         estimateBar(34);
     
+      //==============================================================================================================================    
         function create() {  
-        
+
             updateBar(100, $("#progressBar")); 
             this.game.stage.disableVisibilityChange = true;
             game.input.keyboard.disabled = false;
@@ -2053,7 +2057,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             else {
                 alert("Please first select a Gigabot from the dropdown menu in the above navigation bar.");
             }
-            botQueueChannelData( botId, botIndex ); // start this client listening on the channel for when a change is made to the selected bot's control keyspace
+            listenToBotQueue( botId, botIndex ); // start this client listening on the channel for when a change is made to the selected bot's control keyspace
         }
         // Array.prototype.indexOfObject = function indexOfObject (property, value) { // for finding the index of an object with specified value or a property within an array
         //     for ( var i = 0, len = this.length; i < len; i++) {
@@ -2067,13 +2071,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }   
             return -1; 
         };
-        
-        //userControl.timerRunning = false;
 
         updateWaiters = function( val ) {
 
             bot.control = channel.getKeyspace(botId).get('control');
-            if ( typeof val.waiters[0].clientId !== "undefined" ) {
+            if ( val.waiters.length > 0 ) { // make sure there's even somebody in the array
                 if ( val.waiters[0].clientId !== userControl.prevController ) { //|| val.waiters.length === 1 ) {
                     console.log("new controller: " + val.waiters[0].clientId );
                     userControl.prevController = val.waiters[0].clientId;
@@ -2083,6 +2085,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                         var updateTime = function() {
                             time--;
                             if ( val.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
+                                userControl.timerRunning = true;
                                 channel.getKeyspace( botId ).put( 'timer', { 'time' : time });
                             }
                             updateTimeText( time );
@@ -2096,15 +2099,17 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     function userTimerTimeout() {
                         clearInterval( userTimerIntervalId );
 
-                        if ( bot.control.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
-                            channel.getKeyspace( botId ).put( 'timer', { 'time' : 0 });
+                        if ( bot.control.waiters.length > 0 ) {
+                            if ( bot.control.waiters[0].clientId === client.clientId() ) { // this is the one thing the only the controlling user's client will do: publishing his/her remaining time to the keyspace
+                                channel.getKeyspace( botId ).put( 'timer', { 'time' : 0 });
+                                userControl.timerRunning = false;
+                            }
                         }
 
                         if ( bot.control.waiters.length === 1 ) { //you're the only user, so you can continue controlling
                             console.log(bot.control.waiters[0].name + " is the only user, so they can continue controlling...");
                             userControl.prevController = ''; // little hack for the special case to allow the current controlling user to continue controlling
                             updateWaiters( bot.control );
-                            //userControl.timerRunning = true;
                         }
                         else {
                             console.log( "others are waiting. Switch to the next user");
@@ -2124,20 +2129,23 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             if ( userControl.newViewer ) {
                 userControl.newViewer = false;
-                userControl.prevController = val.waiters[0].clientId;
-                updateCurrentUserText( val.waiters[0].name );
-                var timer = channel.getKeyspace(botId).get('timer');
-                if ( typeof timer !== "undefined" ) {
-                    if ( typeof timer.time !== "undefined" ) {
-                        console.log("start timer in the middle, at " + timer.time + " sec for " + val.waiters[0].name );
-                        startTimer( timer.time, val.waiters[0] );
+                if ( val.waiters.length > 0 ) {
+                    userControl.prevController = val.waiters[0].clientId;
+                    updateCurrentUserText( val.waiters[0].name );
+
+                    var timer = channel.getKeyspace(botId).get('timer');
+                    if ( typeof timer !== "undefined" ) {
+                        if ( typeof timer.time !== "undefined" ) {
+                            console.log("start timer in the middle, at " + timer.time + " sec for " + val.waiters[0].name );
+                            startTimer( timer.time, val.waiters[0] );
+                        }
+                        else {
+                            console.log("time undefined");
+                        }
                     }
                     else {
-                        console.log("time undefined");
+                        console.log("timer object undefined");
                     }
-                }
-                else {
-                    console.log("timer object undefined");
                 }
             }
 
@@ -2151,7 +2159,6 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         //     userControl.time = controlDuration; // preset time duration
         //     updateTimeText( userControl.time );
         //     yourUserTimerIntervalId = setInterval( function() { yourUserTimer() }, 1000 );
-
         // }
         // function yourUserTimer  () {
         //     if ( userControl.time > 0 ) {
@@ -2168,20 +2175,24 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         //         updateWaiters( bot.control );
         //     }
         // }
+
         userChangeBot = function ( previousBotId ) {
+            console.log("previous bot id: " + previousBotId);
             var controlObject = channel.getKeyspace( previousBotId ).get('control');
             if ( typeof controlObject !== "undefined" ) {
                 var index = indexOfObject( controlObject.waiters, "clientId", client.clientId() ); //check if viewer has already requested control
                 if ( index === 0 ) { //the user was currently controlling a bot, so move to the next user
-                    clearInterval( yourUserTimerIntervalId );
+                    console.log("the user was currently controlling a bot, so move to the next user");
                     controlObject.waiters.splice(index, 1);
+                    clearInterval( userTimerIntervalId );
+                    clearTimeout( userTimerTimeoutId );
                     channel.getKeyspace( previousBotId ).put('control', { 'waiters' : controlObject.waiters } );
                 }
                 else if ( index > 0 ) {
                     console.log("you are still in the wait list for " + previousBotId);
                 }
             }
-        }
+        };
         // update text only
         function updateTimeText( time ) {
             console.log( time );
@@ -2194,6 +2205,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
         function updateWaitCountText( waitCount ) {
             game.world.remove(userControl.textWaitCount);
+            if ( waitCount < 0 ) waitCount = 0;
             userControl.textWaitCount = game.add.text( positionControl.x+70, positionControl.y+52+browserFix, waitCount + '', textStyles.data );
         }
         // new viewer and update viewers
@@ -2222,25 +2234,12 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     userControl.newViewer = true;
                     updateWaiters( bot.control );
                     userControl.newViewer = false;
-                    // var timer = channel.getKeyspace(selectedBot).get('timer');
-                    // if ( typeof timer !== "undefined" ) {
-                    //     if ( typeof timer.time !== "undefined" ) {
-                    //         console.log("start timer in the middle");
-                    //         setTimeout( userTimerTimeoutId, (timer.time + 1) * 1000 );
-                    //     }
-                    //     else {
-                    //         console.log("time undefined");
-                    //     }
-                    // }
-                    // else {
-                    //     console.log("timer object undefined");
-                    // }
                 }
                 else {
                     console.log("waiters array undefined")
                 }
             }
-        }
+        };
         updateViewers = function ( clientId, dataViewers ) {
             userControl.viewCount = 0;
             for ( var k in dataViewers ) {
@@ -2250,7 +2249,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             game.world.remove(userControl.textViewCount);
             userControl.textViewCount = game.add.text( positionControl.x+70, positionControl.y+29+browserFix, userControl.viewCount, textStyles.data );
-        }
+        };
         // let user update his/her name
         function actionInputName () {
             if ( userControl.timerRunning === false ) {
@@ -2264,7 +2263,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             updateWaitCountText(0);
             updateTimeText('');
             updateCurrentUserText('nobody');
-        }
+        };
         function actionStopOnClick () {
             if ( dashboardStatus === 1 ) {
                 statusButton.setFrames(2,2,2,2);

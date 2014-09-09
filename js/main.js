@@ -11,12 +11,11 @@
 function updateBar (progress, $element) {
     var progressBarWidth = progress * $element.width() / 100;
     $element.find('div').animate({ width: progressBarWidth }, 0).html(progress + "%&nbsp;");
-    if (progress === 100) {
+    if (progress >= 100) {
         $("#progressBar").remove();
     }
 }
-
-updateBar(24, $("#progressBar"));
+updateBar(2, $("#progressBar"));
 
 // global variables related to the game and states
 var client;
@@ -44,6 +43,8 @@ var displayName;
 var rearrangeDashboard;
 var rearrangeVideoDashboard;
 
+var writeMessage;
+
 // resize html elements - responsive
 function adjustHtml ( newWidth, newHeight) {
     var newDimensions = {
@@ -54,7 +55,7 @@ function adjustHtml ( newWidth, newHeight) {
     document.getElementById("gameWorld").style.width = newDimensions.x;
     document.getElementById("gameWorld").style.height = newDimensions.y; 
     // resize #textEditor width
-    document.getElementById("textEditor").style.width = newDimensions.x; 
+    //document.getElementById("textEditor").style.width = newDimensions.x; 
     // move text editor buttons
     var textEditButtons1 = '-moz-calc(50% - ' + newWidth/2 + 'px)';
     var textEditButtons2 = '-webkit-calc(50% - ' + newWidth/2 + 'px)';
@@ -132,15 +133,15 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         }
     });
 
-    updateBar(59, $("#progressBar"));    
+    updateBar(11, $("#progressBar"));    
 
     function beginGame(client, channel) {
         console.log(client.clientId());
         /* === Dashboard control panel === */
 
-        var canvasWidth = document.getElementById('gameWorld').offsetWidth;
+        //var canvasWidth = document.getElementById('gameWorld').offsetWidth;
+        var canvasWidth = 1132; //we're temporarily ignoring the reponsive stuff
         var canvasHeight = 663;
-        //var canvasWidth = 1132, canvasHeight = 530;
         
         game = new Phaser.Game(canvasWidth, canvasHeight, Phaser.AUTO, "gameWorld", {
             preload: preload, 
@@ -153,10 +154,10 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             preload: preload, 
             create: create,
             update: update
-        }
+        };
         game.state.add( 'newState', NewState );
 
-        updateBar(78, $("#progressBar"));
+        updateBar(25, $("#progressBar"));
 
         channel.onMessage( function(evt ) {
             var msg = evt.payload.getBytesAsJSON();
@@ -176,6 +177,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     appendDropdown( joined );
                 }
             }
+            else {
+                writeMessage(joined, "Joined the channel.");
+            }
             channel.getKeyspace(joined).on('robot', function(val) {
                 if ( !(joined in botStore) ) {
                     // add already connected bots to botStore and the drop-down menu
@@ -193,7 +197,45 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 parent.removeChild( child );
                 delete botStore[ left ];
             }
+            else {
+                writeMessage(left, "Left the channel.");
+            }
         });
+
+        /* chat stuff */
+        $('#sendie').keyup(function (e) {
+            if (e.keyCode == 13) {
+                var text = $(this).val();
+                //channel.publish({msg: text});
+                channel.getKeyspace('chat').put('message', { 
+                    'clientId' : client.clientId(), 
+                    'message' : text 
+                });
+                $(this).val("");
+            }
+        });
+
+        writeMessage = function(clientId, text) {
+            var data = new Identicon(clientId, 24).toString();
+            var img = '<img style="float:left; margin-right:4px;" width=24 height=24 src="data:image/png;base64,' + data + '">';
+            $('#chat-area').append($("<p>" + img + text + "<br style='clear: both;' />  </p>"));
+            document.getElementById('chat-area').scrollTop = document.getElementById('chat-area').scrollHeight;
+        }
+
+        channel.getKeyspace('chat').on('message', function(val) {
+            console.log(val);
+            writeMessage(val.clientId,val.message);
+        });
+
+        // document.getElementById("sendMessage").onclick = function() {
+        //     var node = document.getElementById("sendie");
+        //     var text = $('#sendie').val();
+        //     console.log(text);
+        //     channel.getKeyspace('chat').put('message', { 
+        //         'clientId' : client.clientId(), 
+        //         'message' : text 
+        //     });
+        // };
 
         /* Add new bot */
         $("#addBot").click(function() {
@@ -357,7 +399,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         //         game.width = canvasWidth;
         //     }
         //     adjustHtml( canvasWidth, canvasHeight );
-        // }
+        // };
         // rearrangeDashboard();
 
         rearrangeVideoDashboard = function () {
@@ -373,11 +415,11 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             for ( var i = 1; i <= numGangs; i++ ) {
                 positionGangs[ i ] = { x : 856, y : 161 + ( i - 1 ) * ( gangHeightMin + ( numCheckboxRows ) * 28 + 10 ) } // rightmost column position
             }
-            console.log(heightGangs);
             canvasHeight = 663;
             canvasWidth = 1132;
             adjustHtml( canvasWidth, canvasHeight );
-        }
+        
+        };
         rearrangeVideoDashboard();
 
 
@@ -397,7 +439,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.directionSwapped = false;
             this.time1 = 0;
             //this.previousDirectionSwapped = false;
-        }
+        };
         Motor.prototype.constructor = Motor;
 
         /* Motor Forward Button */
@@ -411,7 +453,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.motor = motor;
             this.name = 'forward button ' + motor;
             game.add.existing(this);
-        }
+        };
         ForwardButton.prototype = Object.create(Phaser.Button.prototype);
         ForwardButton.prototype.constructor = ForwardButton;
         
@@ -426,7 +468,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.motor = motor;
             this.name = 'reverse button ' + motor;
             game.add.existing(this);
-        }
+        };
         ReverseButton.prototype = Object.create(Phaser.Button.prototype);
         ReverseButton.prototype.constructor = ReverseButton;
 
@@ -440,7 +482,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.motor = motor;
             this.name = 'plus button ' + motor;
             game.add.existing(this);
-        }
+        };
         MotorPlusButton.prototype = Object.create(Phaser.Button.prototype);
         MotorPlusButton.prototype.constructor = MotorPlusButton;
 
@@ -454,7 +496,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.motor = motor;
             this.name = 'minus button ' + motor;
             game.add.existing(this);
-        }
+        };
         MotorMinusButton.prototype = Object.create(Phaser.Button.prototype);
         MotorMinusButton.prototype.constructor = MotorMinusButton;
 
@@ -473,7 +515,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             //this.state = 'up';
             this.name = 'slider bar ' + motor;
             game.add.existing(this);
-        }
+        };
         SliderBar.prototype = Object.create(Phaser.Button.prototype);
         SliderBar.prototype.constructor = SliderBar;
         var sliderTracks = {}
@@ -493,7 +535,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.name = 'swap direction button ' + motor;
             this.state = 'up';
             game.add.existing(this);
-        }
+        };
         DirectionCheckbox.prototype = Object.create(Phaser.Button.prototype);
         DirectionCheckbox.prototype.constructor = DirectionCheckbox;
         var directionConfigLabels = {}
@@ -507,7 +549,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.animations.add('stalled', [1], 1);
             this.name = 'dial ' + motor;
             game.add.existing(this);
-        }
+        };
         RotationDial.prototype = Object.create(Phaser.Sprite.prototype);
         RotationDial.prototype.constructor = RotationDial;
         var needles = {}
@@ -517,7 +559,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.motor = motor;
             this.name = 'needle ' + motor;
             game.add.existing(this);
-        }
+        };
         RotationNeedle.prototype = Object.create(Phaser.Sprite.prototype);
         RotationNeedle.prototype.constructor = RotationNeedle;
 
@@ -532,7 +574,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             this.previousSpeed = 0;
             this.direction = "stopped";
-        }
+        };
         Gang.prototype.constructor = Gang;
         var gangIds = {}
         var gangLabels = {}
@@ -547,7 +589,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.gang = gang;
             this.name = 'plus button ' + gang;
             game.add.existing(this);
-        }
+        };
         GangPlusButton.prototype = Object.create(Phaser.Button.prototype);
         GangPlusButton.prototype.constructor = GangPlusButton;
 
@@ -561,7 +603,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.gang = gang;
             this.name = 'minus button ' + gang;
             game.add.existing(this);
-        }
+        };
         GangMinusButton.prototype = Object.create(Phaser.Button.prototype);
         GangMinusButton.prototype.constructor = GangMinusButton;
 
@@ -580,7 +622,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             //this.state = 'up';
             this.name = 'slider bar ' + gang;
             game.add.existing(this);
-        }
+        };
         GangSliderBar.prototype = Object.create(Phaser.Button.prototype);
         GangSliderBar.prototype.constructor = GangSliderBar;
 
@@ -589,7 +631,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         GangCheckbox = function ( game, gang ) {
             this.gang = gang;
             this.name = 'checkbox gang ' + gang;
-        }
+        };
         GangCheckbox.prototype = Object.create(Phaser.Button.prototype);
         GangCheckbox.prototype.constructor = GangCheckbox;
 
@@ -605,7 +647,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.motor.gang = gang;
             this.name = 'checkbox gang ' + gang + ' motor ' + motor;
             game.add.existing(this);
-        }
+        };
         MotorCheckbox.prototype = Object.create(Phaser.Button.prototype);
         MotorCheckbox.prototype.constructor = MotorCheckbox;
 
@@ -614,7 +656,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         GangMotorLabel = function ( game, gang ) {
             this.gang = gang;
             this.name = 'checkbox gang ' + gang;
-        }
+        };
         GangMotorLabel.prototype = Object.create(Phaser.Button.prototype);
         GangMotorLabel.prototype.constructor = GangMotorLabel;
 
@@ -629,7 +671,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.gang = gang;
             this.name = 'forward button ' + gang;
             game.add.existing(this);
-        }
+        };
         GangForwardButton.prototype = Object.create(Phaser.Button.prototype);
         GangForwardButton.prototype.constructor = GangForwardButton;
 
@@ -644,7 +686,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             this.gang = gang;
             this.name = 'reverse button ' + gang;
             game.add.existing(this);
-        }
+        };
         GangReverseButton.prototype = Object.create(Phaser.Button.prototype);
         GangReverseButton.prototype.constructor = GangReverseButton;
 
@@ -669,13 +711,14 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 this.x = x2;
                 this.y = y2;
             }
-        }
+        };
         Frame.prototype.constructor = Frame;
 
         var topBars = {}
         var dividers = {}
 
-        /* Play/stop button and status */
+        /* System info */
+        var positionSystem = { x : 1, y : 1 }
         var labelStatus, statusButton;
         var dashboardStatus = 1; // 1 = 'running/resumed', 0 = 'stopped/paused'
         var status = { statusDisplay : "running..." } // initially running
@@ -695,8 +738,8 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             // ultrasonic : ''
         }
 
-        /* System info */
-        var positionSystem = { x : 1, y : 1 }
+        /* User chat */
+        var positionChat = { x : 856, y : 1 }
 
         /* Touch sensor */
         var positionTouch = { x : 1, y : 96 }
@@ -739,8 +782,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // var labelScreen, LCDScreenBox;
         // var screenMessage = { messageDisplay1 : "", messageDisplay2 : "", messageDisplay3 : "", messageDisplay4 : "" }
 
-        /* User control queue */
-        var positionControl = { x : 856, y : 1 }
+
 
         /* Button for testing */
         var getKeyspaceButton;
@@ -759,7 +801,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         // user's code if uses "up" arrow but didn't hit submit before doing so.
         var tempCode;
 
-        updateBar(92,$("#progressBar"));
+        updateBar(31,$("#progressBar"));
 
         //===================================================
 
@@ -826,7 +868,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 //console.log("Delete:" + key);
             });
 
-        }
+        };
         function setMotorInfo( key, val ) {
             needles[key].angle = val.position;
             if ( !val.stalled ) {
@@ -1001,7 +1043,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         getInitialTouchData = function( robotClientId ) {
             var touchData = channel.getKeyspace(botId).get('touchDash'); // get the current touch count
             setInitialTouchData('touchDash', touchData);
-        }
+        };
         function setInitialTouchData( key, val ) {
             game.world.remove(touch.countDisplay);
             game.world.remove(touch.timeDisplay);
@@ -1030,7 +1072,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         getInitialBatteryLevel = function( robotClientId ) {
             var batteryLevelData = channel.getKeyspace(botId).get('batteryDash'); // get the current battery level, before occassional updates
             setInitialBatteryLevel('batteryDash', batteryLevelData);
-        }
+        };
         setInitialBatteryLevel = function( key, val ) { // set the current battery level if it exists (it's been calculated in a dashboard somewhere)
             if ( typeof val !== 'undefined' ) {
                 battery.level = val.batteryLevel;
@@ -1062,7 +1104,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     batteryLevelFill.drawRect(positionSystem.x+207, positionSystem.y+37, 50, 16);
                 }
             }
-        }
+        };
         setSensorIDs = function() {
             var botData = channel.getKeyspace(botId).get('robot');
             if ( typeof botData !== "undefined" ) {
@@ -1123,7 +1165,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 }
             }
             //console.dir(sensorOverlays);
-        }
+        };
         setInitialDashboardSettings = function( robotClientId ) { // if the bot has just been connected and has no dashboard settings in its keyspace
             var dashMotorA = channel.getKeyspace(robotClientId).get('aDash');
             if ( typeof dashMotorA === 'undefined' ) { // if this is undefined, that will mean that the bot is just being accessed for the first time, so it doesn't have any dashboard settings in each keyspace.
@@ -1147,13 +1189,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     channel.getKeyspace(botId).put( dashKey, initialChannelData );
                 }
             }
-        }
+        };
         displayName = function( robotName ) {
             game.world.remove( bot.nameDisplay );
             if ( robotName.length > 15 ) var botNameDisplay = robotName.slice(0, 15);
             else var botNameDisplay = robotName;
             bot.nameDisplay = game.add.text(positionSystem.x+145-botNameDisplay.length*60/16, positionSystem.y+61+browserFix, botNameDisplay, textStyles.status);
-        }
+        };
       //==============================================================================================================================
         function preload() {
             game.load.spritesheet('forwardButton','assets/buttons/forward_button_spritesheet.png', 89, 45);
@@ -1181,6 +1223,25 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.image('dividerPair','assets/divider_pair.png',99,24);
         } //end preload
       //==============================================================================================================================
+        
+        var interpolateBarId;
+        function estimateBar(p) {
+            updateBar(p,$("#progressBar"));
+            var x = 9;
+            var interpolateBar = function() {
+                p = p + x;
+                x++;
+                if ( p > 100 ) {
+                    clearInterval(interpolateBarId);
+                }
+                updateBar(p,$("#progressBar"));
+            };
+            interpolateBarId = setInterval(interpolateBar, 220);
+        }
+        estimateBar(34);
+    
+      //==============================================================================================================================    
+                
         function create() {          
             updateBar(100, $("#progressBar")); 
             this.game.stage.disableVisibilityChange = true;
@@ -1206,7 +1267,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             frames[ 'IR' ] = new Frame( game, 'IR', positionIR.x, positionIR.y, 275, 60);
             frames[ 'ultrasonic' ] = new Frame( game, 'ultrasonic', positionUltrasonic.x, positionUltrasonic.y, 275, 60);
             //frames[ 'screen' ] = new Frame( game, 'screen', positionScreen.x, positionScreen.y, 275, 99);
-            frames[ 'control'] = new Frame( game, 'control', positionControl.x, positionControl.y, 275, 150 );
+            frames[ 'chat'] = new Frame( game, 'chat', positionChat.x, positionChat.y, 275, 150 );
 
           /* Top Bars */
             topBars[ 'system' ] = game.add.sprite( positionSystem.x+1, positionSystem.y+1,'sensorBar');
@@ -1215,6 +1276,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             topBars[ 'IR' ] = game.add.sprite( positionIR.x+1, positionIR.y+1,'sensorBar');
             topBars[ 'ultrasonic' ] = game.add.sprite( positionUltrasonic.x+1, positionUltrasonic.y+1,'sensorBar');
             //topBars[ 'screen' ] = game.add.sprite( positionScreen.x+1, positionScreen.y+1,'sensorBar');
+            //topBars[ 'chat' ] = game.add.sprite( positionChat.x+1, positionChat.y+1, 'sensorBar' );
 
           /* Labels */
             labelSystem = game.add.text(positionSystem.x+8, positionSystem.y+1+browserFix, "System", textStyles.title);
@@ -2095,7 +2157,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                     console.log("RECONNECT FAILURE.");
                 }
             });
-        }
+        };
 
 
         /* responsive stuff */
@@ -2263,13 +2325,16 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         // When the latest click is within the dashboard, enable the hotkeys
         // When the latest click is within the textEditor, disable the hotkeys s.t. user can use all letters when typing
-        $("#textEditor").click( function () { // hovering over textEditor
+        $("#textEditor").click( function () { // over textEditor
+            disableKeyboard();
+        });
+        $("#sendMessageArea").click( function () { // over chat message input
             disableKeyboard();
         });
         function disableKeyboard() {
             game.input.keyboard.disabled = true;
         }
-        $("#gameWorld").click( function () { // hovering over textEditor
+        $("#gameWorld").click( function () { // over game world
             enableKeyboard();
         });
         function enableKeyboard() {

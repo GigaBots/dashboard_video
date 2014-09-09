@@ -1,7 +1,9 @@
 /* Progress bar
 ========================================= */
 #progressBar {
-	margin: 15% auto;
+	margin: 10px auto -34px auto;
+	position: relative;
+	display: block;
 	width: 600px;
 	height: 24px;
 	background-color: #292929;
@@ -36,6 +38,8 @@
 	/*resize:both;*/
 	overflow: auto;
 	clear: both;
+	width: 1132px;
+	height: 663px;
 }
 
 /* Video canvas
@@ -56,6 +60,77 @@
 	border-color: #6f6f6f;
 }
 
+/* Content
+========================================= */
+.content {
+	width: 1132px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Chat
+========================================= */
+#chat-area {
+	position: relative;
+	margin: -420px 1px 150px 856px;
+	overflow: auto; 
+	border-width: 2px;
+	border-color: #6f6f6f; 
+	padding: 8px; 
+	/*background: white; */
+	color: #DDD;
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 12px;
+	width: 275px;
+	height: 150px;
+}
+#chat-area span { 
+	color: white; 
+	background: #333; 
+	padding: 2px 8px; 
+	-moz-border-radius: 5px; 
+	-webkit-border-radius: 8px; 
+	margin: 0 5px 0 0; 
+}
+#chat-area p { 
+	padding: 0 0 4px 0; 
+	border-bottom: 
+	1px solid #6f6f6f; 
+}
+
+#sendMessageArea p { 
+	width: 277px;
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 16px;
+	color: #202020;
+	text-align: left;
+	padding: 1px 8px;
+	margin: 520px 1px 0px 855px;
+	border-width: 2px;
+	border-color: #6f6f6f; 
+	/* gradient */
+	background-image: -webkit-linear-gradient(top, #777879 0%, #626263 100%);
+	background-image: linear-gradient(to bottom, #777879 0%, #626263 100%);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff626263', endColorstr='#ff777879', GradientType=0);
+}
+#sendie { 
+	position: relative;
+	margin: 0px 1px -268px 855px;
+	border-width: 2px;
+	border-color: #6f6f6f; 
+	width: 277px; 
+	height: 294px;
+	padding: 10px; 
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 12px; 
+	resize: none;
+}
+/*#sendMessage {
+	font-size: 12px;
+	margin: 263px 1px 0px 1068px;
+}*/
+
 /* Text editor
 ========================================= */
 #textEditor {
@@ -64,15 +139,17 @@
 	opacity: 0.95;
 	overflow: auto;
 	min-height: 180px;
-	width: 1132px;
-	resize: horizontal;
+	/*width: 1132px;*/
+	width: 847px;
+	/*resize: horizontal;*/
 	font-family: Courier New, Lucida Console, Monaco, monospace;
 	border-radius: 1px;
 	border-style: solid;
 	border-width: 2px;
 	border-color: #6f6f6f;
-	margin: 249px auto -0 auto; /* gap for relative positioning below video canvas, with motor boxes in between */
-	/*margin: 8px auto -0 auto;*/
+	/*margin: -344px 1px 0 1px;*/ /*with send message button*/
+	margin: -55px 1px 0 0px; /* gap for relative positioning below video canvas, with motor boxes in between */
+	/*margin: 8px auto -0 auto;*/ /* original (without video) */
 	font-size: 12px;
 	position: relative;
 	padding-bottom: 20px;
@@ -127,15 +204,15 @@
 }
 #runButton {
 	font-size: 12px;
-    left: -moz-calc(50% - 566px);
-    left: -webkit-calc(50% - 566px);
-    left: calc(50% - 566px);*/
+    left: -moz-calc(50% - 565px);
+    left: -webkit-calc(50% - 565px);
+    left: calc(50% - 565px);
 }
 #repoButton {
 	font-size: 12px;
-	left: -moz-calc(50% - 566px);
-	left: -webkit-calc(50% - 566px);
-	left: calc(50% - 566px);*/
+	left: -moz-calc(50% - 565px);
+	left: -webkit-calc(50% - 565px);
+	left: calc(50% - 565px);
 }
 
 
@@ -206,7 +283,16 @@ html::-WebKit-scrollbar-thumb {
 ========================================= */
 @media (max-width: 992px) {
 	.content {
-		padding-bottom: 85px;
+		padding-bottom: 85px; /* this is for the footer */
 		height: 100%;
+	}
+}
+
+@media (max-width: 1149px) {
+	#videoCanvas {
+		margin-left: 285px; /* prevent the video canvas from moving to to the left, since it's otherwise centered */
+	}
+	#progressBar {
+		margin-left: 265px;
 	}
 }

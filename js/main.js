@@ -96,6 +96,7 @@ function appendDropdown( robotClientId ) {
         setSensorIDs();
         // bot name display on dashboard in system box
         displayName( botName );
+        sendMessage( client.clientId(), 'Selected ' + botName + '.' );
     });
 }
 // add bots to drop-down menu in navbar (here, it's just for bots that are declared in botStore - our fakebots)

@@ -112,7 +112,7 @@
 	        var ctx = videoCanvas.getContext('2d');
 	        ctx.font = '13px Arial';
 	        ctx.fillStyle = '#DDD';
-	        ctx.fillText('Loading...', videoCanvas.width/2-30, videoCanvas.height/2-6);
+	        ctx.fillText('Loading Video Stream...', videoCanvas.width/2-69, videoCanvas.height/2-6);
 
 	        // Setup the WebSocket connection and start the player
 	        // var client = new WebSocket('ws://192.168.1.108:8084'); // on pi's local network
@@ -124,16 +124,17 @@
 		<div  id="progressBar">
 			<div></div>
 		</div>
+
 	<!-- chat area -->
-	    <div id="chat-wrap">
+	
+	    <!-- <div id="chat-wrap"> -->
 	        <div id="chat-area"></div>
-	    </div>
+	    <!-- </div> -->
 
 	    <form id="send-message-area">
 	        <p>Your message: </p>
 	        <textarea id="sendie" maxlength='100'></textarea>
 	    </form>
-
 
 	<!-- console-based text editor / repl -->
 	 	<div id="textEditor">
@@ -146,6 +147,7 @@
 		<a href="https://github.com/GigaBots/Dashboard_Mindstorm" target="_tab">
 			<button class="editorButtons" id="repoButton">&nbsp;&nbsp;Repositories&nbsp;&nbsp;</button>
 		</a>
+			
 	</div>
 <!-- footer -->
 	<footer class="main-footer hidden-sm hidden-xs">

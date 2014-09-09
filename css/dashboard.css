@@ -140,7 +140,7 @@
 	overflow: auto;
 	min-height: 180px;
 	/*width: 1132px;*/
-	width: 846px;
+	width: 847px;
 	/*resize: horizontal;*/
 	font-family: Courier New, Lucida Console, Monaco, monospace;
 	border-radius: 1px;
@@ -148,7 +148,7 @@
 	border-width: 2px;
 	border-color: #6f6f6f;
 	/*margin: -344px 1px 0 1px;*/ /*with send message button*/
-	margin: -55px 1px 0 1px; /* gap for relative positioning below video canvas, with motor boxes in between */
+	margin: -55px 1px 0 0px; /* gap for relative positioning below video canvas, with motor boxes in between */
 	/*margin: 8px auto -0 auto;*/ /* original (without video) */
 	font-size: 12px;
 	position: relative;

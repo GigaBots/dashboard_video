@@ -60,6 +60,65 @@
 	border-color: #6f6f6f;
 }
 
+/* Chat
+========================================= */
+#chat-area {
+	position: relative;
+	margin: -420px auto 150px 856px;
+	overflow: auto; 
+	border-width: 2px;
+	border-color: #6f6f6f; 
+	padding: 8px; 
+	/*background: white; */
+	color: #DDD;
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 12px;
+	width: 275px;
+	height: 150px;
+}
+#chat-area span { 
+	color: white; 
+	background: #333; 
+	padding: 4px 8px; 
+	-moz-border-radius: 5px; 
+	-webkit-border-radius: 8px; 
+	margin: 0 5px 0 0; 
+}
+#chat-area p { 
+	padding: 4px 0; 
+	border-bottom: 
+	1px solid #6f6f6f; 
+}
+
+#send-message-area p { 
+	width: 277px;
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 16px;
+	color: #202020;
+	text-align: left;
+	padding: 1px 8px;
+	margin: 520px auto 0px 855px;
+	border-width: 2px;
+	border-color: #6f6f6f; 
+	/* gradient */
+	background-image: -webkit-linear-gradient(top, #777879 0%, #626263 100%);
+	background-image: linear-gradient(to bottom, #777879 0%, #626263 100%);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff626263', endColorstr='#ff777879', GradientType=0);
+}
+#sendie { 
+	position: relative;
+	margin: 0px auto -268px 855px;
+	border-width: 2px;
+	border-color: #6f6f6f; 
+	width: 277px; 
+	height: 294px;
+	padding: 10px; 
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 12px; 
+	/*resize: none;*/
+}
+
 /* Text editor
 ========================================= */
 #textEditor {
@@ -68,14 +127,15 @@
 	opacity: 0.95;
 	overflow: auto;
 	min-height: 180px;
-	width: 1132px;
-	resize: horizontal;
+	/*width: 1132px;*/
+	width: 846px;
+	/*resize: horizontal;*/
 	font-family: Courier New, Lucida Console, Monaco, monospace;
 	border-radius: 1px;
 	border-style: solid;
 	border-width: 2px;
 	border-color: #6f6f6f;
-	margin: 249px auto -0 auto; /* gap for relative positioning below video canvas, with motor boxes in between */
+	margin: -55px auto 0 1px; /* gap for relative positioning below video canvas, with motor boxes in between */
 	/*margin: 8px auto -0 auto;*/
 	font-size: 12px;
 	position: relative;

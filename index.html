@@ -69,6 +69,8 @@
 	<div class="content" -webkit-overflow-scrolling: touch>
 	<!-- control panel in html5 canvas -->
 		<div id="gameWorld">
+			<script type="text/javascript" src="js/pnglib.js"></script>
+			<script type="text/javascript" src="js/identicon.js"></script>
 			<script src="js/phaser.min.js"></script>
 			<script data-main="js/main" type="text/javascript" src="js/require.js"></script>
 			<script src="js/jquery.min.js"></script>
@@ -103,26 +105,37 @@
 	            <a href="http://www.apple.com/safari/">Safari</a> or Internet Explorer 10
 	        </p>
     	</canvas>
-    <script type="text/javascript" src="js/jsmpg.js"></script>
-    <script type="text/javascript">
-        // Show loading notice
-        var videoCanvas = document.getElementById('videoCanvas');
-        var ctx = videoCanvas.getContext('2d');
-        ctx.font = '13px Arial';
-        ctx.fillStyle = '#DDD';
-        ctx.fillText('Loading...', videoCanvas.width/2-30, videoCanvas.height/2-6);
+	    <script type="text/javascript" src="js/jsmpg.js"></script>
+	    <script type="text/javascript">
+	        // Show loading notice
+	        var videoCanvas = document.getElementById('videoCanvas');
+	        var ctx = videoCanvas.getContext('2d');
+	        ctx.font = '13px Arial';
+	        ctx.fillStyle = '#DDD';
+	        ctx.fillText('Loading...', videoCanvas.width/2-30, videoCanvas.height/2-6);
 
-        // Setup the WebSocket connection and start the player
-        // var client = new WebSocket('ws://192.168.1.108:8084'); // on pi's local network
-        var wsClient = new WebSocket('ws://ec2-54-68-70-127.us-west-2.compute.amazonaws.com:8084/');
-        var player = new jsmpeg(wsClient, {canvas: videoCanvas});
+	        // Setup the WebSocket connection and start the player
+	        // var client = new WebSocket('ws://192.168.1.108:8084'); // on pi's local network
+	        var wsClient = new WebSocket('ws://ec2-54-68-70-127.us-west-2.compute.amazonaws.com:8084/');
+	        var player = new jsmpeg(wsClient, {canvas: videoCanvas});
 
-    </script>
-<!-- progress bar -->
-	<div  id="progressBar">
-		<div></div>
-	</div>
-<!-- console-based text editor / repl -->
+	    </script>
+	<!-- progress bar -->
+		<div  id="progressBar">
+			<div></div>
+		</div>
+	<!-- chat area -->
+	    <div id="chat-wrap">
+	        <div id="chat-area"></div>
+	    </div>
+
+	    <form id="send-message-area">
+	        <p>Your message: </p>
+	        <textarea id="sendie" maxlength='100'></textarea>
+	    </form>
+
+
+	<!-- console-based text editor / repl -->
 	 	<div id="textEditor">
 			<p id="label">Gigabots Console<br></p>
 			<div class="previousCode"></div>

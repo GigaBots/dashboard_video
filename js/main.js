@@ -82,6 +82,17 @@ function appendDropdown( robotClientId ) {
     var child = document.getElementById( "dropdownDivider" ); // get the element we want to place the new bot above
     element.insertBefore(para,child); // append the new list element to the dropdown menu element, inserting it above the divider element
     var newString = "#" + robotClientId;
+    // if ( robotClientId === 'fakeBotId2') {
+    //     var image = '<img src="./assets/hans.png" width="256">';
+    //     $(newString).on('DOMParaInserted', function() {
+    //         $(this).popover({
+    //         placement: 'right',
+    //         content: image,
+    //         html: true,
+    //         trigger: 'hover',
+    //         });
+    //     });
+    // }
   /* action once a bot is selected */
     $( newString ).click( function() {
         botId = this.id;

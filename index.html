@@ -97,14 +97,17 @@
     		</script>
 		</div>
 	<!-- mpeg1 decoder video player canvas -->
-		<canvas id="videoCanvas" width="560" height="420">
-	        <p>
-	            Please use a browser that supports the Canvas Element, like
-	            <a href="http://www.google.com/chrome">Chrome</a>,
-	            <a href="http://www.mozilla.com/firefox/">Firefox</a>,
-	            <a href="http://www.apple.com/safari/">Safari</a> or Internet Explorer 10
-	        </p>
-    	</canvas>
+		<div id="videoContainer">
+			<p id="videoLabel">Live Video Stream</p>
+			<canvas id="videoCanvas" width="560" height="420">
+		        <p>
+		            Please use a browser that supports the Canvas Element, like
+		            <a href="http://www.google.com/chrome">Chrome</a>,
+		            <a href="http://www.mozilla.com/firefox/">Firefox</a>,
+		            <a href="http://www.apple.com/safari/">Safari</a> or Internet Explorer 10
+		        </p>
+	    	</canvas>
+	    </div>
 	    <script type="text/javascript" src="js/jsmpg.js"></script>
 	    <script type="text/javascript">
 	        // Show loading notice
@@ -116,7 +119,7 @@
 
 	        // Setup the WebSocket connection and start the player
 	        // var client = new WebSocket('ws://192.168.1.108:8084'); // on pi's local network
-	        var wsClient = new WebSocket('ws://ec2-54-68-70-127.us-west-2.compute.amazonaws.com:8084/');
+	        var wsClient = new WebSocket('ws://ec2-54-68-114-21.us-west-2.compute.amazonaws.com:8084/');
 	        var player = new jsmpeg(wsClient, {canvas: videoCanvas});
 
 	    </script>
@@ -127,19 +130,19 @@
 
 	<!-- chat area -->
 	
-	    <!-- <div id="chat-wrap"> -->
-	        <div id="chat-area"></div>
-	    <!-- </div> -->
-
+	 	<div id="chatContainer">
+		    <p id="activityLabel">Channel Activity</p>
+		    <div id="chat-area"></div>	 		
+	 	</div>
 	    <form id="sendMessageArea">
-	        <p>Your Message </p>
-	        <textarea id="sendie" maxlength='140'></textarea>
+	        <p>Send a Message</p>
+	        <textarea id="sendie" maxlength='140' placeholder="Type a message here and press ENTER to send it to the channel"></textarea>
 	    </form>
 <!-- 	    <button class="editorButtons" id="sendMessage">&nbsp;&nbsp;&nbsp;Send&nbsp;&nbsp;&nbsp;</button> -->
 
 	<!-- console-based text editor / repl -->
 	 	<div id="textEditor">
-			<p id="label">Gigabots Console<br></p>
+			<p id="textEditorLabel">Gigabots Console<br></p>
 			<div class="previousCode"></div>
 			<p id="currentCode" contentEditable="true" placeholder="Type your JavaScript code here!"></p>
 			<div id="bottomBar"></div>

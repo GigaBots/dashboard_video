@@ -18,9 +18,8 @@ function updateBar (progress, $element) {
 updateBar(2, $("#progressBar"));
 
 // global variables related to the game and states
-var client;
-var game;
-var restartState;
+var client,
+    game;
 var gameStates = {}
 
 // global bot variables stored in client's browser
@@ -32,19 +31,20 @@ var botId = "", botIndex = 0, botName = "";
 var bot = { nameDisplay : "" }
 
 // global functions
-var listenToBot;
-var getInitialTouchData;
-var setInitialTouchData;
-var getInitialBatteryLevel;
-var setInitialBatteryLevel;
-var setSensorIDs;
-var setInitialDashboardSettings;
-var displayName;
-var rearrangeDashboard;
-var rearrangeVideoDashboard;
-
-var writeMessage;
-var sendMessage;
+var listenToBot,
+    writeMessage,
+    sendMessage,
+    sendChatMessage,
+    getInitialTouchData,
+    setInitialTouchData,
+    getInitialBatteryLevel,
+    setInitialBatteryLevel,
+    setSensorIDs,
+    setInitialDashboardSettings,
+    displayName,
+    rearrangeDashboard,
+    rearrangeVideoDashboard,
+    restartState;
 
 // resize html elements - responsive
 function adjustHtml ( newWidth, newHeight) {
@@ -107,7 +107,7 @@ function appendDropdown( robotClientId ) {
         setSensorIDs();
         // bot name display on dashboard in system box
         displayName( botName );
-        sendMessage( client.clientId(), 'Selected ' + botName + '.' );
+        sendChatMessage( client.clientId(), 'Selected ' + botName + '.' );
     });
 }
 // add bots to drop-down menu in navbar (here, it's just for bots that are declared in botStore - our fakebots)
@@ -215,7 +215,14 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
         });
 
-        sendMessage = function(  clientId, content ) {
+        sendMessage = function( botClientId, userClientId, content ) { // this only goes out to user controlling the same bot as you
+            channel.getKeyspace( botClientId ).put('message', { 
+                'clientId' : userClientId, 
+                'message' : content 
+            });
+        };
+
+        sendChatMessage = function(  clientId, content ) { // this goes out to everyone- for chat messages and for bot selections
             channel.getKeyspace('chat').put('message', { 
                 'clientId' : clientId, 
                 'message' : content 
@@ -227,7 +234,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             if (e.keyCode == 13) {
                 var text = $(this).val();
                 //channel.publish({msg: text});
-                sendMessage( client.clientId(), text );
+                sendChatMessage( client.clientId(), text );
                 $(this).val("");
             }
         });
@@ -868,6 +875,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 else if ( key === 'robot' ) {
                     setBatteryLevel(val.ev3.power);
                 }
+                else if ( key === 'message' ) {
+                    writeMessage(val.clientId, val.message);
+                }
             }, function (key, val) {
                 //console.log("Update:" + key +"->"+JSON.stringify(val));
                 if ( robotClientId !== botId ) {
@@ -895,6 +905,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 }
                 else if ( key === 'robot') {
                     setBatteryLevel(val.ev3.power);
+                }
+                else if ( key === 'message' ) {
+                    writeMessage(val.clientId, val.message);
                 }
             }, function (key) {
                 console.log("bot " + robotClientId + " disconnected");
@@ -1525,7 +1538,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             //console.log("flipping directions for motor " + motorPort + " from " + temp + " to " + this.directionSwapped );
             if ( this.directionSwapped === true ) var word = 'Checked';
             else var word = 'Unchecked';
-            sendMessage( client.clientId(), word + ' the Swap Directions box for motor ' + motorPort.toUpperCase() + '.' );;
+            sendMessage( botId, client.clientId(), word + ' the Swap Directions box for motor ' + motorPort.toUpperCase() + '.' );;
         }
         function configDirectionsActionUp () {
             directionChecks[ this.port ].state = 'up';
@@ -1549,7 +1562,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove( motors[ motorPort ].currentSpeedDisplay );
             motors[ motorPort ].currentSpeedDisplay = game.add.text(positionMotors[motorPort].x+91, positionMotors[motorPort].y+59+browserFix, motors[ motorPort ].speed.toFixed(1), textStyles.data);
             //console.log("increasing motor " + motorPort + " speed to " + motors[ motorPort ].speed.toFixed(2) );
-            sendMessage( client.clientId(), 'Increased the speed of Motor ' + motorPort.toUpperCase() + ' to ' + motors[motorPort].speed.toFixed(1) + '.' );
+            sendMessage( botId, client.clientId(), 'Increased the speed of Motor ' + motorPort.toUpperCase() + ' to ' + motors[motorPort].speed.toFixed(1) + '.' );
         }
         function decreaseSpeedClickActionDown () {
             var motorPort = this.port;
@@ -1569,7 +1582,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove( motors[ motorPort ].currentSpeedDisplay );
             motors[ motorPort ].currentSpeedDisplay = game.add.text(positionMotors[motorPort].x+91, positionMotors[motorPort].y+59+browserFix, motors[ motorPort ].speed.toFixed(1), textStyles.data);
             //console.log("decreasing motor " + motorPort + " speed to " + motors[ motorPort ].speed.toFixed(2) );
-            sendMessage( client.clientId(), 'Decreased the speed of Motor ' + motorPort.toUpperCase() + ' to ' + motors[motorPort].speed.toFixed(1) + '.' );
+            sendMessage( botId, client.clientId(), 'Decreased the speed of Motor ' + motorPort.toUpperCase() + ' to ' + motors[motorPort].speed.toFixed(1) + '.' );
         }
         function changeSpeedSlideActionDown () {
             var motorPort = this.port;
@@ -1625,31 +1638,31 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove( motors[ motorPort ].currentSpeedDisplay );
             motors[ motorPort ].currentSpeedDisplay = game.add.text(positionMotors[motorPort].x+91, positionMotors[motorPort].y+59+browserFix, motors[ motorPort ].speed.toFixed(1), textStyles.data);
             //console.log("changing speed of motor " + motorPort + " to " + motors[ motorPort ].speed.toFixed(2));
-            sendMessage( client.clientId(), 'Changed the speed of Motor ' + motorPort.toUpperCase() + ' to ' + motors[motorPort].speed.toFixed(1) + '.' );
+            sendMessage( botId, client.clientId(), 'Changed the speed of Motor ' + motorPort.toUpperCase() + ' to ' + motors[motorPort].speed.toFixed(1) + '.' );
         }
         function forwardDirectionActionDown () {
             //console.log("move motor " + this.port + " forward"); 
             moveMotor( botId, this.port, "f", this.speed, this.directionSwapped );
             forwardButtons[this.port].setFrames(2,2,2,2); // show the forward button as down, in case keyboard button inputs were being used instead of clicking            
-            sendMessage( client.clientId(), 'Started moving Motor ' + this.port.toUpperCase() + ' forward.' );            
+            sendMessage( botId, client.clientId(), 'Started moving Motor ' + this.port.toUpperCase() + ' forward.' );            
         }
         function forwardDirectionActionUp() {
             //console.log("stop motor " + this.port);
             stopMotor( botId, this.port ); 
             forwardButtons[this.port].setFrames(1,0,2,0); // show the forward button as up (normal position)
-            sendMessage( client.clientId(), 'Stopped moving Motor ' + this.port.toUpperCase() + ' forward.' );
+            sendMessage( botId, client.clientId(), 'Stopped moving Motor ' + this.port.toUpperCase() + ' forward.' );
         }
         function reverseDirectionActionDown () {
             //console.log("move motor " + this.port + " in reverse"); 
             moveMotor( botId, this.port, "r", this.speed, this.directionSwapped );
             reverseButtons[this.port].setFrames(2,2,2,2); // show the reverse button as down, in case keyboard button inputs were being used instead of clicking            
-            sendMessage( client.clientId(), 'Started moving Motor ' + this.port.toUpperCase() + ' in reverse.' );
+            sendMessage( botId, client.clientId(), 'Started moving Motor ' + this.port.toUpperCase() + ' in reverse.' );
         }
         function reverseDirectionActionUp() {
             //console.log("stop motor " + this.port);
             stopMotor( botId, this.port ); 
             reverseButtons[this.port].setFrames(1,0,2,0); // show the reverse button as up (normal position)
-            sendMessage( client.clientId(), 'Stopped moving Motor ' + this.port.toUpperCase() + ' in reverse.' );
+            sendMessage( botId, client.clientId(), 'Stopped moving Motor ' + this.port.toUpperCase() + ' in reverse.' );
         }
 
         /* Gang controls */
@@ -1682,7 +1695,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove( gangs[ id ].currentSpeedDisplay );
             gangs[ id ].currentSpeedDisplay = game.add.text(positionGangs[id].x+103, positionGangs[id].y+30+browserFix, gangs[ id ].speed.toFixed(1), textStyles.data);
             //console.log("increasing gang " + id + " speed to " + gangs[ id ].speed.toFixed(2) );
-            sendMessage( client.clientId(), 'Increased the speed of Gang ' + id + ' to ' + gangs[ id ].speed.toFixed(1) + '.' );
+            sendMessage( botId, client.clientId(), 'Increased the speed of Gang ' + id + ' to ' + gangs[ id ].speed.toFixed(1) + '.' );
         }
         function decreaseGangSpeedClickActionDown () {
             var id = this.gangId;
@@ -1712,7 +1725,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove( gangs[ id ].currentSpeedDisplay );
             gangs[ id ].currentSpeedDisplay = game.add.text(positionGangs[id].x+103, positionGangs[id].y+30+browserFix, gangs[ id ].speed.toFixed(1), textStyles.data);
             //console.log("decreasing gang " + id + " speed to " + gangs[ id ].speed.toFixed(2) );
-            sendMessage( client.clientId(), 'Decreased the speed of Gang ' + id + ' to ' + gangs[ id ].speed.toFixed(1) + '.' );
+            sendMessage( botId, client.clientId(), 'Decreased the speed of Gang ' + id + ' to ' + gangs[ id ].speed.toFixed(1) + '.' );
         }
         function changeGangSpeedSlideActionDown () {
             var id = this.gangId;
@@ -1788,7 +1801,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.world.remove( gangs[ id ].currentSpeedDisplay );
             gangs[ id ].currentSpeedDisplay = game.add.text(positionGangs[id].x+103, positionGangs[id].y+30+browserFix, gangs[ id ].speed.toFixed(1), textStyles.data);
             //console.log("changing speed of gang " + id + " to " + gangs[ id ].speed.toFixed(2));
-            sendMessage( client.clientId(), 'Changed the speed of Gang ' + id + ' to ' + gangs[ id ].speed.toFixed(1) + '.' );
+            sendMessage( botId, client.clientId(), 'Changed the speed of Gang ' + id + ' to ' + gangs[ id ].speed.toFixed(1) + '.' );
         }
         function actionMotorCheckbox () {
             var gangId = this.gang;
@@ -1797,13 +1810,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             if ( gangs[ gangId ][ motorPort ] === false ) {
                 gangs[ gangId ][ motorPort ] = true;
                 motors[ motorPort ].gang = gangId;
-                sendMessage( client.clientId(), 'Added Motor ' + motorPort.toUpperCase() + ' to Gang ' + gangId + '.' );
+                sendMessage( botId, client.clientId(), 'Added Motor ' + motorPort.toUpperCase() + ' to Gang ' + gangId + '.' );
                 gangCheckboxes[ gangId ][ motorPort ].setFrames(1,1,1,1); // check the box
                 for ( var k = 1; k <= numGangs; k++ ) { // check to see if the motor is in any other gang, and if so, remove it from that gang
                     if ( gangs[ k ][ motorPort ] === true ) {
                         if ( k !== gangId ) {
                             gangs[ k ][ motorPort ] = false;
-                            sendMessage( client.clientId(), 'Removed Motor ' + motorPort.toUpperCase() + ' from Gang ' + k + '.' );
+                            sendMessage( botId, client.clientId(), 'Removed Motor ' + motorPort.toUpperCase() + ' from Gang ' + k + '.' );
                             gangCheckboxes[ k ][ motorPort ].setFrames(2,0,1,0); // uncheck the other box
                             var otherDashKey = k + 'Dash';
                             var otherGangChannelData = {
@@ -1825,7 +1838,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }
             else {
                 gangs[ gangId ][ motorPort ] = false;
-                sendMessage( client.clientId(), 'Removed Motor ' + motorPort.toUpperCase() + ' from Gang ' + gangId + '.' );
+                sendMessage( botId, client.clientId(), 'Removed Motor ' + motorPort.toUpperCase() + ' from Gang ' + gangId + '.' );
                 gangCheckboxes[ gangId ][ motorPort ].setFrames(2,0,1,0); // uncheck the box
             }
 
@@ -1871,7 +1884,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 gangChannelData[ m ] = gangs[ this.gangId ][ m ];
             }
             channel.getKeyspace(botId).put( dashKey, gangChannelData );
-            sendMessage( client.clientId(), 'Started moving Gang ' + this.gangId + ' forward.' );            
+            sendMessage( botId, client.clientId(), 'Started moving Gang ' + this.gangId + ' forward.' );            
         }
         function gangForwardDirectionActionUp() {
             //console.log("stop gang " + this.gangId); 
@@ -1891,7 +1904,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 gangChannelData[ m ] = gangs[ this.gangId ][ m ];
             }
             channel.getKeyspace(botId).put( dashKey, gangChannelData );
-            sendMessage( client.clientId(), 'Stopped moving Gang ' + this.gangId + ' forward.' );
+            sendMessage( botId, client.clientId(), 'Stopped moving Gang ' + this.gangId + ' forward.' );
         }
         function gangReverseDirectionActionDown () {
             //console.log("move gang " + this.gangId + " in reverse"); 
@@ -1911,7 +1924,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 gangChannelData[ m ] = gangs[ this.gangId ][ m ];
             }
             channel.getKeyspace(botId).put( dashKey, gangChannelData );
-            sendMessage( client.clientId(), 'Started moving Gang ' + this.gangId + ' in reverse.' );      
+            sendMessage( botId, client.clientId(), 'Started moving Gang ' + this.gangId + ' in reverse.' );      
         }
         function gangReverseDirectionActionUp() {
             //console.log("stop gang " + this.gangId); 
@@ -1931,7 +1944,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
                 gangChannelData[ m ] = gangs[ this.gangId ][ m ];
             }
             channel.getKeyspace(botId).put( dashKey, gangChannelData );
-            sendMessage( client.clientId(), 'Stopped moving Gang ' + this.gangId + ' in reverse.' );
+            sendMessage( botId, client.clientId(), 'Stopped moving Gang ' + this.gangId + ' in reverse.' );
         }
         //=============================================================================
       /* Motor communication with Robot via messages to Big Bang channel */

@@ -26,6 +26,21 @@
 	overflow: hidden;
 }
 
+/* Content
+========================================= */
+.content {
+	width: 1132px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-bottom: 58px; /* This should be the footer height + 10px */
+	height: 100%;
+}
+
+/*.popover {
+	max-width: 512px;
+	width: auto;
+}*/
+
 /* Control panel canvas
 ========================================= */
 #gameWorld {	
@@ -39,63 +54,94 @@
 	overflow: auto;
 	clear: both;
 	width: 1132px;
-	height: 663px;
+	height: 687px;
 }
 
 /* Video canvas
 ========================================= */
+#videoContainer {
+	background-color: rgba(49, 50, 51, .5);
+	width: 562px;
+	height: 443px;
+	display: block;
+	/*position: relative;*/
+	margin: -687px auto auto auto;
+	border-style: solid;
+	border-width: 2px;
+	border-color: #6f6f6f;
+	border-radius: 1px;
+	/*margin-bottom: 23px;*/
+}
 #videoCanvas {
     /* Always stretch the canvas to 560x420, regardless of its
     internal size. */
-    background-color: rgba(49, 50, 51, .5);
-    width: 562px;
-    height: 421px;
-    display: block;
-    margin: -663px auto auto auto;
+    width: 558px;
+    height: 417px;
+    /*padding-top: 22px;*/
     position: relative;
-    text-align: center;
-    border-radius: 1px;
-    border-style: solid;
-	border-width: 2px;
-	border-color: #6f6f6f;
 }
-
-/* Content
-========================================= */
-.content {
-	width: 1132px;
-	margin-left: auto;
-	margin-right: auto;
+#videoLabel {
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 16px;
+	color: #202020;
+	text-align: left;
+	padding: 0px 7px;
+	margin-bottom: 0px;
+	/* gradient */
+	background-image: -webkit-linear-gradient(top, #777879 0%, #626263 100%);
+	background-image: linear-gradient(to bottom, #777879 0%, #626263 100%);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff626263', endColorstr='#ff777879', GradientType=0);
 }
 
 /* Chat
 ========================================= */
-#chat-area {
+#chatContainer {
 	position: relative;
-	margin: -420px 1px 150px 856px;
-	overflow: auto; 
+	margin: 41px 1px 150px 855px;
+	background-color: rgba(49, 50, 51, .69);
+	border-style: solid;
 	border-width: 2px;
-	border-color: #6f6f6f; 
-	padding: 8px; 
-	/*background: white; */
+	border-color: #6f6f6f;
 	color: #DDD;
 	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
 	font-size: 12px;
-	width: 275px;
-	height: 150px;
+	width: 277px;
+	height: 331px;
+}
+#chat-area {
+	position: relative;
+	overflow: auto; 
+	padding: 8px; 
+	color: #DDD;
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 12px;
+	width: 273px;
+	height: 301px;
 }
 #chat-area span { 
 	color: white; 
 	background: #333; 
 	padding: 2px 8px; 
-	-moz-border-radius: 5px; 
-	-webkit-border-radius: 8px; 
 	margin: 0 5px 0 0; 
 }
 #chat-area p { 
-	padding: 0 0 4px 0; 
+	/*padding: 0 0 4px 0; */
 	border-bottom: 
 	1px solid #6f6f6f; 
+}
+#activityLabel {
+	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
+	font-size: 16px;
+	color: #202020;
+	text-align: left;
+	padding: 0px 7px;
+	margin-bottom: 2px;
+	/* gradient */
+	background-image: -webkit-linear-gradient(top, #777879 0%, #626263 100%);
+	background-image: linear-gradient(to bottom, #777879 0%, #626263 100%);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff626263', endColorstr='#ff777879', GradientType=0);
 }
 
 #sendMessageArea p { 
@@ -104,8 +150,8 @@
 	font-size: 16px;
 	color: #202020;
 	text-align: left;
-	padding: 1px 8px;
-	margin: 520px 1px 0px 855px;
+	padding: 0px 7px;
+	margin: -141px 1px 0px 855px;
 	border-width: 2px;
 	border-color: #6f6f6f;
 	/* gradient */
@@ -116,17 +162,18 @@
 }
 #sendie { 
 	position: relative;
-	margin: 0px 1px -268px 855px;
+	margin: 0px 1px 0px 855px;
 	border-width: 2px;
 	border-color: #6f6f6f; 
-	background-color: rgba(221, 221, 221, 0.84); 
+	background-color: rgba(241, 241, 241, 0.86); 
 	width: 277px; 
-	height: 294px;
+	height: 165px;
 	padding: 10px; 
 	color: #202020;
 	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
 	font-size: 14px; 
 	resize: none;
+	outline: none;
 }
 /*#sendMessage {
 	font-size: 12px;
@@ -149,8 +196,7 @@
 	border-style: solid;
 	border-width: 2px;
 	border-color: #6f6f6f;
-	/*margin: -344px 1px 0 1px;*/ /*with send message button*/
-	margin: -55px 1px 0 0px; /* gap for relative positioning below video canvas, with motor boxes in between */
+	margin: -321px 1px 0 0px; /* gap for relative positioning below video canvas, with motor boxes in between */
 	/*margin: 8px auto -0 auto;*/ /* original (without video) */
 	font-size: 12px;
 	position: relative;
@@ -162,7 +208,6 @@
 	padding: 6px;
 	resize: vertical;
 }
-
 #currentCode {
 	overflow: auto;
 	height: 154px;
@@ -174,26 +219,23 @@
 	border-bottom: 2px solid #303030;
 	resize: vertical;
 }
-
 /*#bottomBar {
 	height: 20px;
 	background-color: #606060;
 	border-top: 2px solid #282828;
 }*/
-
-#label {
+#textEditorLabel {
 	font-family: Open Sans, Helvetica, Trebuchet MS, Arial, sans-serif;
 	font-size: 16px;
 	color: #202020;
 	text-align: left;
-	padding: 1px 8px;
+	padding: 0px 7px;
 	margin-bottom: 2px;
 	/* gradient */
 	background-image: -webkit-linear-gradient(top, #777879 0%, #626263 100%);
 	background-image: linear-gradient(to bottom, #777879 0%, #626263 100%);
 	background-repeat: repeat-x;
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff626263', endColorstr='#ff777879', GradientType=0);
-
 }
 /* Run and Repository buttons to align with textEditor */
 .editorButtons {
@@ -222,11 +264,6 @@
 [contentEditable="true"]:empty:not(:focus):before {
         content:attr(placeholder);
         font-style: italic;
-}
-
-.content {
-	padding-bottom: 58px; /* This should be the footer height + 10px */
-	height: 100%;
 }
 
 /* Scroll bar
@@ -269,6 +306,19 @@ html::-WebKit-scrollbar-thumb {
 	background-color: #CF9158;
 }
 
+#chat-area::-WebKit-scrollbar-track {
+	border-radius: 10px;
+	background-color: #606060
+}
+#chat-area::-WebKit-scrollbar {
+	width: 12px;
+	background-color: #606060;
+}
+#chat-area::-WebKit-scrollbar-thumb {
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #CF9158;
+}
 /* Resizer grabber 
 ========================================= */
 ::-webkit-resizer {

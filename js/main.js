@@ -154,7 +154,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         //var canvasWidth = document.getElementById('gameWorld').offsetWidth;
         var canvasWidth = 1132; //we're temporarily ignoring the reponsive stuff
-        var canvasHeight = 663;
+        var canvasHeight = 687;
         
         game = new Phaser.Game(canvasWidth, canvasHeight, Phaser.AUTO, "gameWorld", {
             preload: preload, 
@@ -286,68 +286,85 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
 
         // Specify the number of motors
         var numMotors = 4; //specify # of motors (for now, it must be no more than 26 )
-        var motorColumns = '', motorRows = 1; //specify either # of columns or # of rows (NOT both!) 
+        // var motorColumns = '', motorRows = 1; //specify either # of columns or # of rows (NOT both!) 
         var motorHeight = 232; // height of a motor box
 
         /* Motor positions */
         var positionMotors = {}
-        if ( motorColumns !== '' && typeof motorRows === 'string' ) {
-            var maxMotorColumns = motorColumns;
-            var maxMotorRows = Math.ceil(numMotors/motorColumns);
-        }
-        else {
-            var maxMotorColumns = Math.ceil(numMotors/motorRows);
-            var maxMotorRows = motorRows;
-        }
+        // if ( motorColumns !== '' && typeof motorRows === 'string' ) {
+        //     var maxMotorColumns = motorColumns;
+        //     var maxMotorRows = Math.ceil(numMotors/motorColumns);
+        // }
+        // else {
+        //     var maxMotorColumns = Math.ceil(numMotors/motorRows);
+        //     var maxMotorRows = motorRows;
+        // }
         // set motor frame positions
-        if ( maxMotorRows === 1 ) {
+        
+        //Special case for video dashboard
+        for ( var i = 1; i <= 2; i++ ) {
+            positionMotors[ letters[i] ] = { x : 856, y : 1 + (i-1)*242 }
+        }
+        var maxMotorColumns = 2; //below video
+        var maxMotorRows = Math.ceil((numMotors-2)/maxMotorColumns); //first 2 motors are to the right
+        for ( var i = 1; i <= maxMotorRows; i++ ) { 
             for ( var j = 1; j <= maxMotorColumns; j++ ) {
-                positionMotors[ letters[ j ] ] = { x : 1 + (j-1)*285, y : 430 }
-            }            
+                if ( j === 1 ) var subIndex = j + 1 + (i - 1)/i;
+                else var subIndex = j + 1;
+                var index = subIndex * i - i;
+                if (index > numMotors) break;
+                positionMotors[ letters[ index + 2 ] ] = { x : 286 + (j-1)*285 , y : 453 + (i-1)*242 }
+            } // this is a sequence to position motors (laid out in a grid)
         }
-        else {
-            switch ( maxMotorColumns ) {
-                case 1:
-                    for ( var i = 1; i <= maxMotorRows; i++ ) {
-                        positionMotors[ letters[ i ] ] = { x : 286, y : 1 + (i-1)*242 }
-                    }
-                    break;
-                case 2:
-                    for ( var i = 1; i <= maxMotorRows; i++ ) { 
-                        for ( var j = 1; j <= maxMotorColumns; j++ ) {
-                            if ( j === 1 ) var subIndex = j + 1 + (i - 1)/i;
-                            else var subIndex = j + 1;
-                            var index = subIndex * i - i;
-                            if (index > numMotors) break;
-                            positionMotors[ letters[ index ] ] = { x : 286 + (j-1)*285 , y : 1 + (i-1)*242 }
-                        } // this is a sequence to position motors (laid out in a grid)
-                    }
-                    break;
-                case 3: 
-                    var subIndex, subIndex1 = 2, denominator = 1;
-                    for ( var i = 1; i <= maxMotorRows; i++ ) {
-                        for ( var j = 1; j <= maxMotorColumns; j++ ) {
-                            if ( j === 1 ) {
-                                if ( i !== 1 ) {
-                                    subIndex = subIndex1 += 1/denominator;
-                                    denominator += i;
-                                }
-                                else if ( i === 1 ) subIndex = subIndex1 +=0;
-                            }
-                            else if ( j === 2 ) 
-                                subIndex = subIndex2 = 3 + (i-1)/i;
-                            else if ( j === 3 ) subIndex = 4;
-                            var index = subIndex * i -i;
-                            if (index > numMotors) break;
-                            positionMotors[ letters[ index ] ] = { x : 286 + (j-1)*285 , y : 1 + (i-1)*242 }
-                        } // this is a sequence to position motors (laid out in a grid)
-                    }
-                    break;
-                default:
-                    alert("Please specify 1, 2, or 3 columns, or specify 1 row.");
-                    break;
-            }
-        }
+
+        // if ( maxMotorRows === 1 ) {
+        //     for ( var j = 1; j <= maxMotorColumns; j++ ) {
+        //         positionMotors[ letters[ j ] ] = { x : 1 + (j-1)*285, y : 430 }
+        //     }            
+        // }
+        // else {
+        //     switch ( maxMotorColumns ) {
+        //         case 1:
+        //             for ( var i = 1; i <= maxMotorRows; i++ ) {
+        //                 positionMotors[ letters[ i ] ] = { x : 286, y : 1 + (i-1)*242 }
+        //             }
+        //             break;
+        //         case 2:
+        //             for ( var i = 1; i <= maxMotorRows; i++ ) { 
+        //                 for ( var j = 1; j <= maxMotorColumns; j++ ) {
+        //                     if ( j === 1 ) var subIndex = j + 1 + (i - 1)/i;
+        //                     else var subIndex = j + 1;
+        //                     var index = subIndex * i - i;
+        //                     if (index > numMotors) break;
+        //                     positionMotors[ letters[ index ] ] = { x : 286 + (j-1)*285 , y : 1 + (i-1)*242 }
+        //                 } // this is a sequence to position motors (laid out in a grid)
+        //             }
+        //             break;
+        //         case 3: 
+        //             var subIndex, subIndex1 = 2, denominator = 1;
+        //             for ( var i = 1; i <= maxMotorRows; i++ ) {
+        //                 for ( var j = 1; j <= maxMotorColumns; j++ ) {
+        //                     if ( j === 1 ) {
+        //                         if ( i !== 1 ) {
+        //                             subIndex = subIndex1 += 1/denominator;
+        //                             denominator += i;
+        //                         }
+        //                         else if ( i === 1 ) subIndex = subIndex1 +=0;
+        //                     }
+        //                     else if ( j === 2 ) 
+        //                         subIndex = subIndex2 = 3 + (i-1)/i;
+        //                     else if ( j === 3 ) subIndex = 4;
+        //                     var index = subIndex * i -i;
+        //                     if (index > numMotors) break;
+        //                     positionMotors[ letters[ index ] ] = { x : 286 + (j-1)*285 , y : 1 + (i-1)*242 }
+        //                 } // this is a sequence to position motors (laid out in a grid)
+        //             }
+        //             break;
+        //         default:
+        //             alert("Please specify 1, 2, or 3 columns, or specify 1 row.");
+        //             break;
+        //     }
+        // }
 
         // Specify the number of gangs
         var numGangs = 1; // specify number of gangs
@@ -429,9 +446,9 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             //var heightMax = Math.max( heightMotors, heightGangs, heightSensors );
             if ( heightMax + 2 !== canvasHeight ) canvasHeight = heightMax + 2; // set new canvas height to be eqaul to 
             for ( var i = 1; i <= numGangs; i++ ) {
-                positionGangs[ i ] = { x : 856, y : 161 + ( i - 1 ) * ( gangHeightMin + ( numCheckboxRows ) * 28 + 10 ) } // rightmost column position
+                positionGangs[ i ] = { x : 1, y : 426 + ( i - 1 ) * ( gangHeightMin + ( numCheckboxRows ) * 28 + 10 ) } // rightmost column position
             }
-            canvasHeight = 663;
+            canvasHeight = 687;
             canvasWidth = 1132;
             adjustHtml( canvasWidth, canvasHeight );
         
@@ -770,19 +787,19 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
         var touchIndicator;
 
         /* Color sensor */
-        var positionColor = { x : 1, y : 192 }
+        var positionColor = { x : 1, y : 191 }
         var labelColor, labelColorName, labelIntensity, labelColorRGB;
         var color = { r : 0, g : 0, b : 0, value : 0, name : '', lightIntensity : 0, rgbDisplay : 0, nameDisplay : '', lightIntensityDisplay : 0 }
         var colorDisplay;
 
         /* IR sensor */
-        var positionIR = { x : 1, y : 290 }
+        var positionIR = { x : 1, y : 288 }
         var labelIR, labelIRDist, labelIRUnits;
         var IRDist = 0; 
         var IR = { IRDistDisplay : 0 }
 
         /* Ultrasonic sensor */
-        var positionUltrasonic = { x : 1, y : 360 }
+        var positionUltrasonic = { x : 1, y : 357 }
         var labelUltrasonic, labelUltrasonicDist, labelUltrasonicUnits;
         var ultrasonicDist = 0;
         var ultrasonic = { ultrasonicDistDisplay : 0 }
@@ -1234,6 +1251,7 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             game.load.image('motorBar','assets/motor_bar.png',273,23);
             game.load.image('gangBar','assets/gang_bar.png',273,23);
             game.load.image('sensorBar','assets/sensor_bar.png',273,23);
+            game.load.image('videoBar','assets/video_bar.png',558,23);
             game.load.image('dividerLine','assets/divider_line.png',144,1);
             game.load.image('dividerLine2','assets/divider_line_2.png',261,22);
             game.load.image('dividerPair','assets/divider_pair.png',99,24);
@@ -1277,13 +1295,13 @@ require(['BrowserBigBangClient', 'PewRuntime'], function (bigbang, pew) {
             }, this);
 
           /* Frames */
-            frames[ 'system' ] = new Frame( game, 'system', positionSystem.x, positionSystem.y, 275, 86);
-            frames[ 'touch' ] = new Frame( game, 'touch', positionTouch.x, positionTouch.y, 275, 86);
-            frames[ 'color' ] = new Frame( game, 'color', positionColor.x, positionColor.y, 275, 88);
-            frames[ 'IR' ] = new Frame( game, 'IR', positionIR.x, positionIR.y, 275, 60);
-            frames[ 'ultrasonic' ] = new Frame( game, 'ultrasonic', positionUltrasonic.x, positionUltrasonic.y, 275, 60);
-            //frames[ 'screen' ] = new Frame( game, 'screen', positionScreen.x, positionScreen.y, 275, 99);
-            frames[ 'chat'] = new Frame( game, 'chat', positionChat.x, positionChat.y, 275, 150 );
+            frames[ 'system' ] = new Frame( game, 'system', positionSystem.x, positionSystem.y, 275, 85);
+            frames[ 'touch' ] = new Frame( game, 'touch', positionTouch.x, positionTouch.y, 275, 85);
+            frames[ 'color' ] = new Frame( game, 'color', positionColor.x, positionColor.y, 275, 85);
+            frames[ 'IR' ] = new Frame( game, 'IR', positionIR.x, positionIR.y, 275, 59);
+            frames[ 'ultrasonic' ] = new Frame( game, 'ultrasonic', positionUltrasonic.x, positionUltrasonic.y, 275, 59);
+            // frames[ 'screen' ] = new Frame( game, 'screen', positionScreen.x, positionScreen.y, 275, 99);
+            // frames[ 'chat'] = new Frame( game, 'chat', positionChat.x, positionChat.y, 275, 150 );
 
           /* Top Bars */
             topBars[ 'system' ] = game.add.sprite( positionSystem.x+1, positionSystem.y+1,'sensorBar');
